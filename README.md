@@ -63,10 +63,23 @@ Você deve ter o seguinte software instalado:
 ```bash
 git clone https://github.com/igorBrenno/turismo-ai-llm.git
 
-cd turismo-llm
+cd frontend
 ```
 
-### 2. Instalando bibliotecas e extenções do front
+### 2. criando ambiente virtual
+
+```bash
+python -m venv venv
+
+```
+
+### 3. ativando a venv
+
+```bash
+venv/Script/activete
+```
+
+### 4. Instalando bibliotecas e extenções do front
 
 ```bash
 npm install
@@ -78,10 +91,34 @@ npm install
 npm run dev
 ```
 
-
+## Em outro cmd
 ### Backend
 
-### 1. iniciar o servidor FastApi
+### 1. entra no arquivo backend
+
+```bash
+cd backend
+```
+
+### 2. cria ambiente virtual
+
+```bash
+python -m venv venv
+```
+
+
+### 3. entra no ambiente virtual
+
+```bash
+venv/script/activate
+```
+### 4. Instalar os requirimentos
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. iniciar o servidor FastApi
 
 ```bash
 uvicorn main:app --reload
