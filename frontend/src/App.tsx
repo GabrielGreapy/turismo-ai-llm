@@ -4,6 +4,7 @@ import Login from './pages/login'
 import Register from './pages/register'
 import Profile from './pages/profile-settings'
 import Pesquisa from './pages/city-search'
+import SpotDetails from './pages/SpotDetails'
 // import PontosTuristicos from './pages/PontosTuristicos';
 
 
@@ -23,7 +24,9 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
 
         <Route path='/pesquisa' element={<Pesquisa/>}/>
-        
+
+        <Route path="/spot/:id" element={<SpotDetails />} />
+
         {/* <Route path="/pontos-turisticos" element={<PontosTuristicos />} /> */}
         
         <Route path="/analise-detalhada" element={

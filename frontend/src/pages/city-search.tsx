@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Import do hook de navegação
 import Header from '../components/Header';
 import { 
   MapPin, 
@@ -6,7 +7,9 @@ import {
   Compass, 
   Loader2, 
   Info, 
-  AlertTriangle 
+  AlertTriangle,
+  Star,
+  ExternalLink
 } from 'lucide-react';
 
 interface TouristSpot {
@@ -16,36 +19,11 @@ interface TouristSpot {
   description: string;
   category?: string;
   image_url?: string;
+  rating?: number;
 }
 
-const MOCK_SPOTS: TouristSpot[] = [
-  {
-    id: '1',
-    city: 'Rio de Janeiro',
-    name: 'Cristo Redentor',
-    description: 'Uma das sete maravilhas do mundo moderno, localizada no topo do morro do Corcovado.',
-    category: 'Histórico',
-    image_url: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=600&q=80'
-  },
-  {
-    id: '2',
-    city: 'Rio de Janeiro',
-    name: 'Pão de Açúcar',
-    description: 'Famoso complexo de morros localizado no bairro da Urca com o tradicional passeio de boninho.',
-    category: 'Natureza',
-    image_url: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=600&q=80'
-  },
-  {
-    id: '3',
-    city: 'Paris',
-    name: 'Torre Eiffel',
-    description: 'O monumento pago mais visitado do mundo, ícone global da França localizado no Champ de Mars.',
-    category: 'Arquitetura',
-    image_url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80'
-  }
-];
-
 export default function CitySearch() {
+  const navigate = useNavigate(); // 2. Inicialização do hook
   const [globalSearch, setGlobalSearch] = useState('');
   const [cityName, setCityName] = useState(''); 
   const [loading, setLoading] = useState(false);
@@ -55,17 +33,14 @@ export default function CitySearch() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Injeta e monitora o carregamento real do script do Google Maps
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     
-    // Se o recurso já estiver completamente pronto na janela, atualiza o estado
-    if ((window as any).google?.maps?.places?.Autocomplete) {
+    if ((window as any).google?.maps?.places) {
       setApiReady(true);
       return;
     }
 
-    // Caso o script ainda não exista no DOM, nós o criamos
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (!existingScript) {
       const script = document.createElement('script');
@@ -75,9 +50,8 @@ export default function CitySearch() {
       document.head.appendChild(script);
     }
 
-    // Cria um intervalo curto para checar quando os objetos do Google terminam de se estruturar na Window
     const checkInterval = setInterval(() => {
-      if ((window as any).google?.maps?.places?.Autocomplete) {
+      if ((window as any).google?.maps?.places) {
         setApiReady(true);
         clearInterval(checkInterval);
       }
@@ -86,7 +60,6 @@ export default function CitySearch() {
     return () => clearInterval(checkInterval);
   }, []);
 
-  // Inicializa o Autocomplete assim que a API estiver confirmada como pronta
   useEffect(() => {
     if (!apiReady || !inputRef.current) return;
 
@@ -111,20 +84,52 @@ export default function CitySearch() {
 
   const handleCitySearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cityName.trim()) return;
+    if (!cityName.trim() || !apiReady) return;
 
     setLoading(true);
     setHasSearched(true);
 
-    const cleanCityQuery = cityName.split(',')[0].trim().toLowerCase();
+    const cleanCityQuery = cityName.split(',')[0].trim();
 
-    setTimeout(() => {
-      const filteredResults = MOCK_SPOTS.filter(spot => 
-        spot.city.toLowerCase().includes(cleanCityQuery)
-      );
-      setSpots(filteredResults);
+    const dummyElement = document.createElement('div');
+    const service = new (window as any).google.maps.places.PlacesService(dummyElement);
+
+    const request = {
+      query: `pontos turísticos em ${cleanCityQuery}`,
+      type: 'tourist_attraction'
+    };
+
+    service.textSearch(request, (results: any[], status: any) => {
+      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
+        const mappedSpots: TouristSpot[] = results.slice(0, 8).map((place) => {
+          let photoUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80';
+          if (place.photos && place.photos.length > 0) {
+            photoUrl = place.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 });
+          }
+
+          return {
+            id: place.place_id || Math.random().toString(),
+            city: cleanCityQuery,
+            name: place.name,
+            description: place.formatted_address || 'Ponto turístico local',
+            category: place.types?.includes('museum') ? 'Museu' : 'Atração',
+            image_url: photoUrl,
+            rating: place.rating
+          };
+        });
+
+        setSpots(mappedSpots);
+      } else {
+        setSpots([]);
+      }
       setLoading(false);
-    }, 800);
+    });
+  };
+
+  // 3. Função acionada ao clicar em qualquer card
+  const handleSpotClick = (spot: TouristSpot) => {
+    // Redireciona para /spot/{id} enviando também os dados do ponto turístico no estado
+    navigate(`/spot/${spot.id}`, { state: { spot } });
   };
 
   return (
@@ -134,10 +139,9 @@ export default function CitySearch() {
       <main className="max-w-4xl mx-auto py-8 px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#1b1c1d] mb-1 tracking-tight">Explore Cities</h1>
-          <p className="text-sm text-[#44474c]">Discover the best tourist attractions using smart autocomplete intelligence.</p>
+          <p className="text-sm text-[#44474c]">Discover real tourist attractions with live photos from Google Places.</p>
         </div>
 
-        {/* Formulário de Busca */}
         <section className="bg-white p-6 rounded-xl border border-[#c4c6cd] shadow-sm mb-8">
           <form onSubmit={handleCitySearch} className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="space-y-1.5 flex-1 w-full">
@@ -150,7 +154,7 @@ export default function CitySearch() {
                   id="cityInput"
                   ref={inputRef}
                   type="text"
-                  placeholder={apiReady ? "Type 'Rio de Janeiro' or 'Paris' to test..." : "Loading Google Maps API..."}
+                  placeholder={apiReady ? "Search any city (e.g. Picuí, Rio de Janeiro, Tokyo)..." : "Loading Google Maps API..."}
                   className="w-full bg-[#f5f3f4] border border-[#74777d] rounded-lg pl-11 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#041627] focus:ring-1 focus:ring-[#041627] transition-all disabled:opacity-60"
                   value={cityName}
                   onChange={(e) => setCityName(e.target.value)}
@@ -172,7 +176,6 @@ export default function CitySearch() {
           </form>
         </section>
 
-        {/* Área de Resultados */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4 border-b border-[#c4c6cd] pb-3">
             <Compass className="w-5 h-5 text-[#041627]" />
@@ -184,7 +187,7 @@ export default function CitySearch() {
           {loading && (
             <div className="py-12 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 text-[#041627] animate-spin" />
-              <p className="text-sm font-medium text-[#44474c]">Filtering mock records from component state...</p>
+              <p className="text-sm font-medium text-[#44474c]">Fetching live places and images from Google Maps...</p>
             </div>
           )}
 
@@ -192,9 +195,9 @@ export default function CitySearch() {
             <div className="bg-[#efedef] p-6 rounded-lg flex items-start gap-4 border border-[#c4c6cd]/40">
               <Info className="w-5 h-5 text-[#54647a] shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-[#1b1c1d]">Prototype Interface (Ready for Google API)</h4>
+                <h4 className="text-sm font-bold text-[#1b1c1d]">Live Google Places API Integrated</h4>
                 <p className="text-xs leading-normal text-[#54647a] mt-0.5">
-                  Try typing one of the built-in targets (<strong>Rio de Janeiro</strong> or <strong>Paris</strong>) to simulate response cards.
+                  Type any location in the search bar to load authentic tourist attractions along with their Google photos.
                 </p>
               </div>
             </div>
@@ -206,7 +209,7 @@ export default function CitySearch() {
               <div>
                 <h4 className="text-sm font-bold text-[#ba1a1a]">No Attractions Found</h4>
                 <p className="text-xs leading-normal text-[#44474c] mt-0.5">
-                  No spots mapped locally for "{cityName}".
+                  No registered attractions found for "{cityName}".
                 </p>
               </div>
             </div>
@@ -215,28 +218,33 @@ export default function CitySearch() {
           {!loading && spots.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {spots.map((spot) => (
-                <div key={spot.id} className="bg-white rounded-xl border border-[#c4c6cd] overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                  <div className="h-48 bg-[#e4e2e3] relative">
+                <div 
+                  key={spot.id} 
+                  onClick={() => handleSpotClick(spot)} // 4. Clique que dispara a navegação
+                  className="bg-white rounded-xl border border-[#c4c6cd] overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col"
+                >
+                  <div className="h-48 bg-[#e4e2e3] relative overflow-hidden">
                     <img 
                       src={spot.image_url} 
                       alt={spot.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    {spot.category && (
-                      <span className="absolute top-3 left-3 bg-[#041627] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
-                        {spot.category}
+                    {spot.rating && (
+                      <span className="absolute top-3 right-3 bg-[#041627]/90 text-white text-[11px] font-bold px-2 py-1 rounded flex items-center gap-1 backdrop-blur-sm">
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        {spot.rating}
                       </span>
                     )}
                   </div>
                   <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
                     <div>
-                      <h4 className="text-lg font-bold text-[#1b1c1d] tracking-tight">{spot.name}</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-lg font-bold text-[#1b1c1d] tracking-tight group-hover:text-[#041627] transition-colors">
+                          {spot.name}
+                        </h4>
+                        <ExternalLink className="w-4 h-4 text-[#74777d] group-hover:text-[#041627] transition-colors" />
+                      </div>
                       <p className="text-xs text-[#44474c] mt-1.5 leading-relaxed">{spot.description}</p>
-                    </div>
-                    <div className="pt-3 border-t border-[#efedef] flex justify-end">
-                      <button type="button" className="text-xs font-bold text-[#041627] hover:underline uppercase tracking-wider">
-                        View Analytics
-                      </button>
                     </div>
                   </div>
                 </div>

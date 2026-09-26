@@ -77,3 +77,12 @@ npm install
 ```bash
 npm run dev
 ```
+
+
+### Backend
+
+### 1. iniciar o servidor FastApi
+
+```bash
+uvicorn main:app --reload
+```
