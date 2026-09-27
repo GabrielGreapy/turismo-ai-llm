@@ -66,18 +66,7 @@ git clone https://github.com/igorBrenno/turismo-ai-llm.git
 cd frontend
 ```
 
-### 2. criando ambiente virtual
 
-```bash
-python -m venv venv
-
-```
-
-### 3. ativando a venv
-
-```bash
-venv/Script/activete
-```
 
 ### 4. Instalando bibliotecas e extenções do front
 

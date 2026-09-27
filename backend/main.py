@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from apify_client import ApifyClient
 from openai import OpenAI
 import os
 import json
 from dotenv import load_dotenv
+from adapters.reviews.apify import ApifyReviewsAdapter
+from adapters.reviews.base import ReviewProviderAdapter
 
 if os.path.exists(".env.local"):
     load_dotenv(dotenv_path=".env.local")
@@ -21,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-APIFY_TOKEN = os.getenv("APIFY_TOKEN")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Inicialização do cliente da OpenAI
@@ -32,50 +33,35 @@ def dividir_em_lotes(lista, tamanho_lote):
     for i in range(0, len(lista), tamanho_lote):
         yield lista[i:i + tamanho_lote]
 
-@app.get("/api/spots/{place_id}/reviews")
-async def get_spot_reviews(place_id: str, limit: int = 50): # Aumentei o limit default para testar os lotes
-    if not APIFY_TOKEN:
+def get_reviews_adapter() -> ReviewProviderAdapter:
+    token =  os.getenv("APIFY_TOKEN")
+    if not token:
         raise HTTPException(status_code=500, detail="Token do Apify não configurado.")
+    return ApifyReviewsAdapter(token_apify=token)
 
-    apify_client = ApifyClient(APIFY_TOKEN)
 
-    run_input = {
-        "placeIds": [place_id],
-        "maxReviews": limit,
-        "language": "pt-BR",
-        "personalData": False
-    }
+@app.get("/api/spots/{place_id}/reviews")
+async def get_spot_reviews(
+    place_id: str, 
+    limit: int = 50,
+    review_adapter : ReviewProviderAdapter = Depends(get_reviews_adapter)
+    ):     
+
+    
 
     try:
         # 1. Extração dos comentários via Apify
-        run = apify_client.actor("compass/google-maps-reviews-scraper").call(run_input=run_input)
-        
-        reviews = []
-        textos_para_analise = [] # Lista separada só com os textos para a IA
-        
-        # Verifica a versão da biblioteca do Apify para pegar o ID corretamente
-        dataset_id = run.defaultDatasetId if hasattr(run, "defaultDatasetId") else run.default_dataset_id
-        
-        for item in apify_client.dataset(dataset_id).iterate_items():
-            texto = item.get("text")
-            
-            # Filtramos para guardar apenas reviews que tenham texto escrito
-            if texto:
-                reviews.append({
-                    "author": item.get("name"),
-                    "rating": item.get("stars"),
-                    "text": texto,
-                    "date": item.get("publishedAtDate")
-                })
-                textos_para_analise.append(texto)
-
-        # Se não houver comentários em texto, pulamos a IA
-        if not textos_para_analise:
+        reviews_model = review_adapter.fetch_reviews(place_id=place_id, limit=limit)
+        if not reviews_model:
             return {"total": 0, "reviews": [], "analise_ia": None}
+        
+        textos_para_analise = [r.text for r in reviews_model]
+        reviews = [r.model_dump() for r in reviews_model]
+        
+        
 
         # 2. Processamento em Lotes (Batching)
         TAMANHO_DO_LOTE = 50 # Envia 50 comentários por vez para a IA
-        
         alertas_gerais = []
         resumos_gerais = []
         niveis_encontrados = []
