@@ -63,10 +63,7 @@ async def get_spot_reviews(
         reviews = [r.model_dump() for r in reviews_model]
         
         
-        if reviews:
-            ai_analyzed_data = ai_analyzer_adapter.analizar_reviews(texts=reviews)    
-        else:
-            ai_analyzed_data = None
+        
         
         ai_analyzed_data = ai_analyzer_adapter.analizar_reviews(texts=reviews)
         
