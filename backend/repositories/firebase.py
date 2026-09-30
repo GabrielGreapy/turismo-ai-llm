@@ -10,7 +10,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
         self.collection_name = "analysis_cache"
 
     def get_analysis(self, place_id : str) -> Optional[Dict[ str, Any]]:
-        doc_ref = self.db.collections(self.collection_name).document(place_id)
+        doc_ref = self.db.collection(self.collection_name).document(place_id)
         doc = doc_ref.get()
         
         if doc.exists:
@@ -19,7 +19,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
     def save_data(self, place_id : str, data: Dict[str, Any]) -> None:
         
         print(f"💾 [FIREBASE SAVE] Guardando dados em cache para: {place_id}")
-        doc_ref = self.db.collections(self.collection_name).document(place_id)
+        doc_ref = self.db.collection(self.collection_name).document(place_id)
         
         doc_ref.set(data)
         
