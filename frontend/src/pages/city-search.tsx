@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; // 1. Import do hook de navegação
 import Header from '../components/Header';
+import SpotsMap from '../components/Map';
 import { 
   MapPin, 
   Search, 
@@ -20,6 +21,8 @@ interface TouristSpot {
   category?: string;
   image_url?: string;
   rating?: number;
+  lat : number;
+  lng : number
 }
 
 export default function CitySearch() {
@@ -114,7 +117,9 @@ export default function CitySearch() {
             description: place.formatted_address || 'Ponto turístico local',
             category: place.types?.includes('museum') ? 'Museu' : 'Atração',
             image_url: photoUrl,
-            rating: place.rating
+            rating: place.rating,
+            lat : place.geometry?.location ? place.geometry.location.lat() : 0 ,
+            lng : place.geometry?.location ? place.geometry.location.lng() : 0 ,
           };
         });
 
@@ -175,7 +180,13 @@ export default function CitySearch() {
             </button>
           </form>
         </section>
-
+        <div className="mb-8">
+          <SpotsMap 
+            spots={spots} 
+            onSpotClick={handleSpotClick} 
+            height="380px" 
+          />
+        </div>
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4 border-b border-[#c4c6cd] pb-3">
             <Compass className="w-5 h-5 text-[#041627]" />
@@ -214,6 +225,7 @@ export default function CitySearch() {
               </div>
             </div>
           )}
+
 
           {!loading && spots.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
