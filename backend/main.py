@@ -59,7 +59,7 @@ async def get_spot_reviews(
 
     try:
         
-        cached_analysis = repo.get_analysis(place_id = place_id)
+        cached_analysis = await repo.get_analysis(place_id = place_id)
         if cached_analysis:
             return cached_analysis
             
@@ -82,7 +82,7 @@ async def get_spot_reviews(
             "reviews": reviews,
             "analise_ia": ai_analyzed_data
         }
-        repo.save_data(place_id=place_id, data= result_of_analysis)
+        await repo.save_data(place_id=place_id, data= result_of_analysis)
         # 4. Retorna tudo junto para o Frontend
         return result_of_analysis
 
