@@ -11,7 +11,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
 
     async def get_analysis(self, place_id : str) -> Optional[Dict[ str, Any]]:
         doc_ref = self.db.collection(self.collection_name).document(place_id)
-        await doc = doc_ref.get()
+        doc = await doc_ref.get()
         
         if doc.exists:
             print(f"[FIREBASE CACHE HIT] Dados encontrados para: {place_id}")
