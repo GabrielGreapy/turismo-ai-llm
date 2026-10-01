@@ -4,11 +4,11 @@ class ReviewRepositorie(ABC):
     
     
     @abstractmethod
-    def get_analysis( self, place_id : str) -> Optional[Dict]:
+    async def get_analysis( self, place_id : str) -> Optional[Dict]:
         # pega as analises e tras pro front se existirem
         pass
 
     @abstractmethod
-    def save_data( self, place_id : str, data : Dict[str,Any]):
+    async def save_data( self, place_id : str, data : Dict[str,Any]):
         # salva dados de analises no banco de dados
         pass

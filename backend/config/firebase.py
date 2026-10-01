@@ -1,6 +1,6 @@
 import os
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore_async
 
 def init_firebase():
     
@@ -20,4 +20,4 @@ def init_firebase():
         print("🔥 [FIREBASE] Inicializado com sucesso!")
 
     
-    return firestore.client()
+    return firestore_async.client()

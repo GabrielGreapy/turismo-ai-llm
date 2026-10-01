@@ -9,18 +9,18 @@ class FirebaseReviewRepository(ReviewRepositorie):
         self.db = init_firebase()
         self.collection_name = "analysis_cache"
 
-    def get_analysis(self, place_id : str) -> Optional[Dict[ str, Any]]:
+    async def get_analysis(self, place_id : str) -> Optional[Dict[ str, Any]]:
         doc_ref = self.db.collection(self.collection_name).document(place_id)
-        doc = doc_ref.get()
+        await doc = doc_ref.get()
         
         if doc.exists:
             print(f"[FIREBASE CACHE HIT] Dados encontrados para: {place_id}")
             return doc.to_dict()
-    def save_data(self, place_id : str, data: Dict[str, Any]) -> None:
+    async def save_data(self, place_id : str, data: Dict[str, Any]) -> None:
         
         print(f"💾 [FIREBASE SAVE] Guardando dados em cache para: {place_id}")
         doc_ref = self.db.collection(self.collection_name).document(place_id)
         
-        doc_ref.set(data)
+        await doc_ref.set(data)
         
         
