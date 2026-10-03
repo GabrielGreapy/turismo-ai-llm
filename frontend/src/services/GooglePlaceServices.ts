@@ -12,35 +12,51 @@ export class GooglePlaceService {
         const cleanQuery = searchTerm.split(',')[0].trim();
     const dummyElement = document.createElement('div');
     const service = new (window as any).google.maps.places.PlacesService(dummyElement);
+    
+    const [ establishments, touristicPoints]  = await Promise.all([
+        this.executeTextSearch( service, `estabelecimentos em ${cleanQuery}`, 'establishment'),
+        this.executeTextSearch(service, `pontos turisticos em ${cleanQuery}`),
+    ])
 
-    return new Promise((resolve ) => {
-        service.textSearch(
-            { 
-                query : `estabelecimentos em ${cleanQuery}`,
-                type : 'establishment',
-            },
-            (results : any[], status : any) => {
-                if(status !== (window as any).google.maps.places.PlacesServiceStatus.OK || !results){
-                    return resolve([])
-                }
-            
-            const spots = results.slice( 0, 50).map((place) => this.mapToPlaceToSpot(place , cleanQuery))
-            resolve(spots);
-            }
-        )
+    const rawResults = [ ...establishments, ...touristicPoints];
+    const spotMap = new Map<string, TouristSpot> ()
+
+    rawResults.forEach((place) => {
+        const spot = this.mapToPlaceToSpot( place, cleanQuery);
+        if ( spot.id && !spotMap.has(spot.id)){
+            spotMap.set(spot.id, spot)
+        }
     })
+
+    return Array.from(spotMap.values())
+    }
+
+    private static executeTextSearch(service: any, query: string, type?: string): Promise<any[]> {
+        return new Promise((resolve) => {
+        const request: any = { query };
+        if (type) request.type = type;
+
+        service.textSearch(request, (results: any[], status: any) => {
+            if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
+            resolve(results);
+            } else {
+            resolve([]);
+            }
+        });
+        });
+    
     }
     private static mapToPlaceToSpot( place : any, city : string) : TouristSpot {
         let photoUrl = this.DEFAULT_IMAGE;
-        if( place.photo && place.photo > 0){
-            photoUrl = place.photo[0].getUrl({ maxWidth : 600, maxHeight : 400});
+        if( place.photos && place.photos.length > 0){
+            photoUrl = place.photos[0].getUrl({ maxWidth : 600, maxHeight : 400});
         }
         return {
             id: place.place_id || Math.random().toString(),
             city,
             name: place.name,
             description: place.formatted_address || 'Ponto turístico local',
-            category: place.types?.includes('museum') ? 'Museu' : 'Atração',
+            category: place.types || 'Não identificado',
             image_url: photoUrl,
             rating: place.rating,
             lat: place.geometry?.location ? place.geometry.location.lat() : 0,
