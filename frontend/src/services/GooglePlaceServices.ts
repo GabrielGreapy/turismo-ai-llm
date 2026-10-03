@@ -13,12 +13,15 @@ export class GooglePlaceService {
     const dummyElement = document.createElement('div');
     const service = new (window as any).google.maps.places.PlacesService(dummyElement);
     
-    const [ establishments, touristicPoints]  = await Promise.all([
+    const [ establishments, touristicPoints, shops, restaurants, bar]  = await Promise.all([
         this.executeTextSearch( service, `estabelecimentos em ${cleanQuery}`, 'establishment'),
-        this.executeTextSearch(service, `pontos turisticos em ${cleanQuery}`),
+        this.executeTextSearch(service, `pontos turisticos em ${cleanQuery}`, 'tourist_atractions'),
+        this.executeTextSearch( service , `Comercios ${cleanQuery}`, 'establhishment'),
+        this.executeTextSearch(service, `Comida ${cleanQuery}`, 'restaurant'),
+        this.executeTextSearch( service , `bar em ${cleanQuery}`, 'bar'),
     ])
 
-    const rawResults = [ ...establishments, ...touristicPoints];
+    const rawResults = [ ...establishments, ...touristicPoints, ...shops, ...restaurants];
     const spotMap = new Map<string, TouristSpot> ()
 
     rawResults.forEach((place) => {

@@ -67,6 +67,7 @@ export default function CitySearch() {
         const place = autocomplete.getPlace();
         if (place.formatted_address) {
           setCityName(place.formatted_address);
+          setSearchTerm(place.formatted_address);
         } else if (place.name) {
           setCityName(place.name);
         }
