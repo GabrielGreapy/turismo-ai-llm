@@ -10,7 +10,7 @@ import {
   Quote, 
   Loader2 
 } from 'lucide-react';
-import Header from '../components/Header';
+
 import SpotsMap from '../components/Map';
 // Tipagens para os dados vindos do backend
 interface AIAlert {
@@ -113,7 +113,7 @@ export default function SpotDetails() {
     <div className="min-h-screen bg-[#fbf9fa] text-[#1b1c1d] flex flex-col">
       {/* O Header geralmente fica fora do padding principal para ocupar a largura total, dependendo da sua implementação */}
       <div className="p-6 pb-0">
-        <Header/>
+       
       </div>
 
       <div className="max-w-3xl mx-auto w-full p-6 space-y-8 flex-1">
