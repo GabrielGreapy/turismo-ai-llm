@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; // 1. Import do hook de navegação
-
+import { GooglePlaceService } from '../services/GooglePlaceServices';
 import SpotsMap from '../components/Map';
 import type { TouristSpot } from '../models/Spot';
 import { 
@@ -76,50 +76,17 @@ export default function CitySearch() {
     }
   }, [apiReady]);
 
-  const handleCitySearch = (e: React.FormEvent) => {
+  const handleCitySearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim() || !apiReady) return;
 
     setLoading(true);
     setHasSearched(true);
     setCityName(searchTerm)
-    const cleanCityQuery = cityName.split(',')[0].trim();
-
-    const dummyElement = document.createElement('div');
-    const service = new (window as any).google.maps.places.PlacesService(dummyElement);
-
-    const request = {
-      query: `estabelecimentos em ${cleanCityQuery}`,
-      type: 'establishment'
-    };
-
-    service.textSearch(request, (results: any[], status: any) => {
-      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
-        const mappedSpots: TouristSpot[] = results.slice(0, 50).map((place) => {
-          let photoUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80';
-          if (place.photos && place.photos.length > 0) {
-            photoUrl = place.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 });
-          }
-
-          return {
-            id: place.place_id || Math.random().toString(),
-            city: cleanCityQuery,
-            name: place.name,
-            description: place.formatted_address || 'Ponto turístico local',
-            category: place.types?.includes('museum') ? 'Museu' : 'Atração',
-            image_url: photoUrl,
-            rating: place.rating,
-            lat : place.geometry?.location ? place.geometry.location.lat() : 0 ,
-            lng : place.geometry?.location ? place.geometry.location.lng() : 0 ,
-          };
-        });
-
-        setSpots(mappedSpots);
-      } else {
-        setSpots([]);
-      }
-      setLoading(false);
-    });
+    const results = await GooglePlaceService.fetchSpots( searchTerm);
+    setSpots(results)
+    setLoading(false);
+    
   };
 
   // 3. Função acionada ao clicar em qualquer card
