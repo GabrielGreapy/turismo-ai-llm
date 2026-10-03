@@ -1,5 +1,3 @@
-
-
 export interface TouristSpot {
   id: string;
   city: string;

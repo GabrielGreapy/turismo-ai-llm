@@ -14,11 +14,11 @@ import {
   ExternalLink
 } from 'lucide-react';
 
-
+import { useSearch } from '../contexts/SearchContext';
 
 export default function CitySearch() {
   const navigate = useNavigate(); // 2. Inicialização do hook
-  const [globalSearch, setGlobalSearch] = useState('');
+  const {searchTerm, setSearchTerm } = useSearch()
   const [cityName, setCityName] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [spots, setSpots] = useState<TouristSpot[]>([]);
@@ -78,11 +78,11 @@ export default function CitySearch() {
 
   const handleCitySearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cityName.trim() || !apiReady) return;
+    if (!searchTerm.trim() || !apiReady) return;
 
     setLoading(true);
     setHasSearched(true);
-
+    setCityName(searchTerm)
     const cleanCityQuery = cityName.split(',')[0].trim();
 
     const dummyElement = document.createElement('div');
@@ -125,12 +125,13 @@ export default function CitySearch() {
   // 3. Função acionada ao clicar em qualquer card
   const handleSpotClick = (spot: TouristSpot) => {
     // Redireciona para /spot/{id} enviando também os dados do ponto turístico no estado
+    setSearchTerm(spot.city)
     navigate(`/spot/${spot.id}`, { state: { spot } });
   };
 
   return (
     <div className="min-h-screen bg-[#fbf9fa] text-[#1b1c1d] font-sans antialiased selection:bg-[#d2e4fb]">
-      <Header searchTerm={globalSearch} setSearchTerm={setGlobalSearch} />
+      <Header/>
 
       <main className="max-w-4xl mx-auto py-8 px-6">
         <div className="mb-8">
@@ -152,8 +153,8 @@ export default function CitySearch() {
                   type="text"
                   placeholder={apiReady ? "Search any city (e.g. Picuí, Rio de Janeiro, Tokyo)..." : "Loading Google Maps API..."}
                   className="w-full bg-[#f5f3f4] border border-[#74777d] rounded-lg pl-11 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#041627] focus:ring-1 focus:ring-[#041627] transition-all disabled:opacity-60"
-                  value={cityName}
-                  onChange={(e) => setCityName(e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   disabled={!apiReady}
                   required
                 />
