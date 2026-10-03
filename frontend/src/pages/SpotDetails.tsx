@@ -11,7 +11,7 @@ import {
   Loader2 
 } from 'lucide-react';
 import Header from '../components/Header';
-
+import SpotsMap from '../components/Map';
 // Tipagens para os dados vindos do backend
 interface AIAlert {
   descricao: string;
@@ -135,6 +135,16 @@ export default function SpotDetails() {
                 {spot.rating}
               </span>
             )}
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#1b1c1d]">
+              Localização no Mapa
+            </h3>
+            <SpotsMap 
+              spots={[]} 
+              selectedSpot={spot} 
+              height="300px" 
+            />
           </div>
 
           <div className="p-6 space-y-4">

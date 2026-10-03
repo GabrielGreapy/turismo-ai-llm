@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
+from repositories.firebase import FirebaseReviewRepository
+from repositories.base import ReviewRepositorie
 import os
 import json
 from dotenv import load_dotenv
@@ -25,7 +27,8 @@ app.add_middleware(
 )
 
 
- 
+def get_review_repositorie() -> ReviewRepositorie:
+    return FirebaseReviewRepository()
 
 
 
@@ -48,12 +51,19 @@ async def get_spot_reviews(
     place_id: str, 
     limit: int = 50,
     review_adapter : ReviewProviderAdapter = Depends(get_reviews_adapter),
-    ai_analyzer_adapter : AIAnalizerProviderAdapter = Depends(get_open_ai_adapter)
+    ai_analyzer_adapter : AIAnalizerProviderAdapter = Depends(get_open_ai_adapter),
+    repo : ReviewRepositorie = Depends(get_review_repositorie)
     ):     
 
     
 
     try:
+        
+        cached_analysis = await repo.get_analysis(place_id = place_id)
+        if cached_analysis:
+            return cached_analysis
+            
+        
         # 1. Extração dos comentários via Apify
         reviews_model = review_adapter.fetch_reviews(place_id=place_id, limit=limit)
         if not reviews_model:
@@ -63,19 +73,18 @@ async def get_spot_reviews(
         reviews = [r.model_dump() for r in reviews_model]
         
         
-        if reviews:
-            ai_analyzed_data = ai_analyzer_adapter.analizar_reviews(texts=reviews)    
-        else:
-            ai_analyzed_data = None
+        
         
         ai_analyzed_data = ai_analyzer_adapter.analizar_reviews(texts=reviews)
         
-        # 4. Retorna tudo junto para o Frontend
-        return {
+        result_of_analysis = {
             "total": len(reviews),
             "reviews": reviews,
             "analise_ia": ai_analyzed_data
         }
+        await repo.save_data(place_id=place_id, data= result_of_analysis)
+        # 4. Retorna tudo junto para o Frontend
+        return result_of_analysis
 
     except Exception as e:
         print(f"Erro no processamento: {e}")

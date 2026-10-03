@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; // 1. Import do hook de navegação
 import Header from '../components/Header';
+import SpotsMap from '../components/Map';
+import type { TouristSpot } from '../models/Spot';
 import { 
   MapPin, 
   Search, 
@@ -12,15 +14,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 
-interface TouristSpot {
-  id: string;
-  city: string;
-  name: string;
-  description: string;
-  category?: string;
-  image_url?: string;
-  rating?: number;
-}
+
 
 export default function CitySearch() {
   const navigate = useNavigate(); // 2. Inicialização do hook
@@ -95,13 +89,13 @@ export default function CitySearch() {
     const service = new (window as any).google.maps.places.PlacesService(dummyElement);
 
     const request = {
-      query: `pontos turísticos em ${cleanCityQuery}`,
-      type: 'tourist_attraction'
+      query: `estabelecimentos em ${cleanCityQuery}`,
+      type: 'establishment'
     };
 
     service.textSearch(request, (results: any[], status: any) => {
       if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
-        const mappedSpots: TouristSpot[] = results.slice(0, 8).map((place) => {
+        const mappedSpots: TouristSpot[] = results.slice(0, 50).map((place) => {
           let photoUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80';
           if (place.photos && place.photos.length > 0) {
             photoUrl = place.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 });
@@ -114,7 +108,9 @@ export default function CitySearch() {
             description: place.formatted_address || 'Ponto turístico local',
             category: place.types?.includes('museum') ? 'Museu' : 'Atração',
             image_url: photoUrl,
-            rating: place.rating
+            rating: place.rating,
+            lat : place.geometry?.location ? place.geometry.location.lat() : 0 ,
+            lng : place.geometry?.location ? place.geometry.location.lng() : 0 ,
           };
         });
 
@@ -175,7 +171,13 @@ export default function CitySearch() {
             </button>
           </form>
         </section>
-
+        <div className="mb-8">
+          <SpotsMap 
+            spots={spots} 
+            onSpotClick={handleSpotClick} 
+            height="380px" 
+          />
+        </div>
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4 border-b border-[#c4c6cd] pb-3">
             <Compass className="w-5 h-5 text-[#041627]" />
@@ -214,6 +216,7 @@ export default function CitySearch() {
               </div>
             </div>
           )}
+
 
           {!loading && spots.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
