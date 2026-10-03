@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; // 1. Import do hook de navegação
-import Header from '../components/Header';
+import { GooglePlaceService } from '../services/GooglePlaceServices';
 import SpotsMap from '../components/Map';
 import type { TouristSpot } from '../models/Spot';
 import { 
@@ -14,11 +14,11 @@ import {
   ExternalLink
 } from 'lucide-react';
 
-
+import { useSearch } from '../contexts/SearchContext';
 
 export default function CitySearch() {
   const navigate = useNavigate(); // 2. Inicialização do hook
-  const [globalSearch, setGlobalSearch] = useState('');
+  const {searchTerm, setSearchTerm } = useSearch()
   const [cityName, setCityName] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [spots, setSpots] = useState<TouristSpot[]>([]);
@@ -67,6 +67,7 @@ export default function CitySearch() {
         const place = autocomplete.getPlace();
         if (place.formatted_address) {
           setCityName(place.formatted_address);
+          setSearchTerm(place.formatted_address);
         } else if (place.name) {
           setCityName(place.name);
         }
@@ -76,61 +77,29 @@ export default function CitySearch() {
     }
   }, [apiReady]);
 
-  const handleCitySearch = (e: React.FormEvent) => {
+  const handleCitySearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cityName.trim() || !apiReady) return;
+    if (!searchTerm.trim() || !apiReady) return;
 
     setLoading(true);
     setHasSearched(true);
-
-    const cleanCityQuery = cityName.split(',')[0].trim();
-
-    const dummyElement = document.createElement('div');
-    const service = new (window as any).google.maps.places.PlacesService(dummyElement);
-
-    const request = {
-      query: `estabelecimentos em ${cleanCityQuery}`,
-      type: 'establishment'
-    };
-
-    service.textSearch(request, (results: any[], status: any) => {
-      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
-        const mappedSpots: TouristSpot[] = results.slice(0, 50).map((place) => {
-          let photoUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80';
-          if (place.photos && place.photos.length > 0) {
-            photoUrl = place.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 });
-          }
-
-          return {
-            id: place.place_id || Math.random().toString(),
-            city: cleanCityQuery,
-            name: place.name,
-            description: place.formatted_address || 'Ponto turístico local',
-            category: place.types?.includes('museum') ? 'Museu' : 'Atração',
-            image_url: photoUrl,
-            rating: place.rating,
-            lat : place.geometry?.location ? place.geometry.location.lat() : 0 ,
-            lng : place.geometry?.location ? place.geometry.location.lng() : 0 ,
-          };
-        });
-
-        setSpots(mappedSpots);
-      } else {
-        setSpots([]);
-      }
-      setLoading(false);
-    });
+    setCityName(searchTerm)
+    const results = await GooglePlaceService.fetchSpots( searchTerm);
+    setSpots(results)
+    setLoading(false);
+    
   };
 
   // 3. Função acionada ao clicar em qualquer card
   const handleSpotClick = (spot: TouristSpot) => {
     // Redireciona para /spot/{id} enviando também os dados do ponto turístico no estado
+    setSearchTerm(spot.city)
     navigate(`/spot/${spot.id}`, { state: { spot } });
   };
 
   return (
     <div className="min-h-screen bg-[#fbf9fa] text-[#1b1c1d] font-sans antialiased selection:bg-[#d2e4fb]">
-      <Header searchTerm={globalSearch} setSearchTerm={setGlobalSearch} />
+      
 
       <main className="max-w-4xl mx-auto py-8 px-6">
         <div className="mb-8">
@@ -152,8 +121,8 @@ export default function CitySearch() {
                   type="text"
                   placeholder={apiReady ? "Search any city (e.g. Picuí, Rio de Janeiro, Tokyo)..." : "Loading Google Maps API..."}
                   className="w-full bg-[#f5f3f4] border border-[#74777d] rounded-lg pl-11 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#041627] focus:ring-1 focus:ring-[#041627] transition-all disabled:opacity-60"
-                  value={cityName}
-                  onChange={(e) => setCityName(e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   disabled={!apiReady}
                   required
                 />

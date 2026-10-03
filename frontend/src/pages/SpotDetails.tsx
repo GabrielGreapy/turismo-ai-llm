@@ -10,7 +10,7 @@ import {
   Quote, 
   Loader2 
 } from 'lucide-react';
-import Header from '../components/Header';
+
 import SpotsMap from '../components/Map';
 // Tipagens para os dados vindos do backend
 interface AIAlert {
@@ -113,7 +113,7 @@ export default function SpotDetails() {
     <div className="min-h-screen bg-[#fbf9fa] text-[#1b1c1d] flex flex-col">
       {/* O Header geralmente fica fora do padding principal para ocupar a largura total, dependendo da sua implementação */}
       <div className="p-6 pb-0">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+       
       </div>
 
       <div className="max-w-3xl mx-auto w-full p-6 space-y-8 flex-1">
@@ -140,11 +140,6 @@ export default function SpotDetails() {
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#1b1c1d]">
               Localização no Mapa
             </h3>
-            <SpotsMap 
-              spots={[]} 
-              selectedSpot={spot} 
-              height="300px" 
-            />
           </div>
 
           <div className="p-6 space-y-4">
@@ -155,6 +150,11 @@ export default function SpotDetails() {
             </div>
           </div>
         </div>
+        <SpotsMap 
+          spots={[]} 
+          selectedSpot={spot} 
+          height="300px" 
+        />
 
         {/* Estado de Carregamento da IA */}
         {loading ? (
