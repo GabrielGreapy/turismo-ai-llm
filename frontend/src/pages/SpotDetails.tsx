@@ -140,11 +140,6 @@ export default function SpotDetails() {
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#1b1c1d]">
               Localização no Mapa
             </h3>
-            <SpotsMap 
-              spots={[]} 
-              selectedSpot={spot} 
-              height="300px" 
-            />
           </div>
 
           <div className="p-6 space-y-4">
@@ -155,6 +150,11 @@ export default function SpotDetails() {
             </div>
           </div>
         </div>
+        <SpotsMap 
+          spots={[]} 
+          selectedSpot={spot} 
+          height="300px" 
+        />
 
         {/* Estado de Carregamento da IA */}
         {loading ? (
