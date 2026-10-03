@@ -3,8 +3,7 @@ import {
   MessageSquare, AlertTriangle, XCircle, MoreVertical, 
   MapPin, Shield, Home, CheckCircle2, Trash2 
 } from 'lucide-react';
-// Certifique-se de ajustar o caminho da importação do Header caso esteja em outra pasta
-import Header from '../components/Header'; 
+
 
 interface Alerta {
   id: number;
@@ -51,7 +50,7 @@ export default function Dashboard() {
     <div className="bg-[#F8FAFC] min-h-screen font-sans text-[#1b1c1d]">
       
       {/* O HEADER AGORA FAZ PARTE EXCLUSIVA DESTA TELA */}
-      <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      
 
       <main className="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
         {/* 2. METRIC CARDS ROW */}

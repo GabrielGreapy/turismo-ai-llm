@@ -5,17 +5,17 @@ import { signOut } from 'firebase/auth'; // Import do método de logout do Fireb
 import { auth } from '../firebaseConfig'; // Substitui a importação do supabase
 import { useProfile } from '../hooks/useProfile';
 
-interface HeaderProps {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-}
+import { useSearch } from '../contexts/SearchContext';
 
-export default function Header({ searchTerm, setSearchTerm }: HeaderProps) {
+
+export default function Header() {
   const [notificacoes, setNotificacoes] = useState(3);
   const [menuPerfilAberto, setMenuPerfilAberto] = useState(false);
   
   const navigate = useNavigate();
   const { profile, loading } = useProfile(); // Puxa os dados reais do banco ou fallback
+  
+  const { searchTerm, setSearchTerm } = useSearch()
 
   const handleLogout = async () => {
     try {
