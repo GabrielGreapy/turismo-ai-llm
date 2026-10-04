@@ -21,7 +21,7 @@ export class GooglePlaceService {
         this.executeTextSearch( service , `bar em ${cleanQuery}`, 'bar'),
     ])
 
-    const rawResults = [ ...establishments, ...touristicPoints, ...shops, ...restaurants];
+    const rawResults = [ ...establishments, ...touristicPoints, ...shops, ...restaurants, ...bar];
     const spotMap = new Map<string, TouristSpot> ()
 
     rawResults.forEach((place) => {

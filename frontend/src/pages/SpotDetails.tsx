@@ -10,33 +10,19 @@ import {
   Quote, 
   Loader2 
 } from 'lucide-react';
-
+import type { AIAlert, AIAnalysis } from '../models/Ai';
+import type {Review } from '../models/Spot'
 import SpotsMap from '../components/Map';
-// Tipagens para os dados vindos do backend
-interface AIAlert {
-  descricao: string;
-  citacao: string;
-  tag: string;
-}
 
-interface AIAnalysis {
-  nivel_risco: 'Baixo' | 'Médio' | 'Alto';
-  resumo: string;
-  alertas: AIAlert[];
-}
 
-interface Review {
-  author: string;
-  rating: number;
-  text: string;
-  date: string;
-}
+
+
 
 export default function SpotDetails() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
+  
 
   // Estados para gerenciar os dados da API
   const [reviews, setReviews] = useState<Review[]>([]);

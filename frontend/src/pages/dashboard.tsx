@@ -3,16 +3,7 @@ import {
   MessageSquare, AlertTriangle, XCircle, MoreVertical, 
   MapPin, Shield, Home, CheckCircle2, Trash2 
 } from 'lucide-react';
-
-
-interface Alerta {
-  id: number;
-  localidade: string;
-  problema: string;
-  severidade: 'Alto' | 'Médio' | 'Baixo';
-  horario: string;
-  tipo: 'map' | 'shield' | 'home';
-}
+import type { Alerta } from '../models/Visual';
 
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
