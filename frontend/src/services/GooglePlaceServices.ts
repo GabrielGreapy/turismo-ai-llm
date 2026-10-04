@@ -24,12 +24,21 @@ export class GooglePlaceService {
     const rawResults = [ ...establishments, ...touristicPoints, ...shops, ...restaurants, ...bar];
     const spotMap = new Map<string, TouristSpot> ()
 
-    rawResults.forEach((place) => {
-        const spot = this.mapToPlaceToSpot( place, cleanQuery);
-        if ( spot.id && !spotMap.has(spot.id)){
-            spotMap.set(spot.id, spot)
+    for (const place of rawResults) {
+        const spot = this.mapToPlaceToSpot(place, cleanQuery);
+        const address = (place.formatted_address ?? place.vicinity ?? '').toLowerCase();
+        const cityQuery = cleanQuery.toLowerCase();
+        const isItOnLocation = address.includes(cityQuery);
+
+        if (!isItOnLocation) {
+            continue;
         }
-    })
+
+        if (spot.id && !spotMap.has(spot.id)) {
+            spotMap.set(spot.id, spot);
+            console.log(spot);
+        }
+    }
 
     return Array.from(spotMap.values())
     }
@@ -54,9 +63,10 @@ export class GooglePlaceService {
         if( place.photos && place.photos.length > 0){
             photoUrl = place.photos[0].getUrl({ maxWidth : 600, maxHeight : 400});
         }
+        
         return {
             id: place.place_id || Math.random().toString(),
-            city,
+            city : city ,
             name: place.name,
             description: place.formatted_address || 'Ponto turístico local',
             category: place.types || 'Não identificado',
