@@ -30,10 +30,11 @@ class ApifyReviewsAdapter(ReviewProviderAdapter):
         for item in datasetItems:
             text = item.get("text")
             
-            author_label = "Local Guide" if item.get("isLocalGuide", False) else "Reviewer"
+            author_label = "Local Guide" if item.get("isLocalGuide", True) else "Reviewer"
             if text:
                 formattedReviews.append(
                     ReviewSchema(
+                        review_id = item.get("reviewId"),
                         author = author_label,
                         rating = float(item.get("stars", 0)),
                         text = text,
