@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import type { Alerta } from '../models/Visual';
 import TotalCommentaries from '../components/totalComentaries';
-import Infractions from '../components/infractions';
+import Infractions from '../components/Infractions';
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
   const [searchTerm, setSearchTerm] = useState('');
