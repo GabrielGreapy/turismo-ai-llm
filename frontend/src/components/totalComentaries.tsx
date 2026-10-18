@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react"
 import { db } from "../firebaseConfig"
-import { collection, getCountFromServer, query, Timestamp, where } from "firebase/firestore"
+import { collection, doc, getCountFromServer, getDoc, query, Timestamp, where } from "firebase/firestore"
 import { MessageSquare } from "lucide-react"
 
 export default function TotalCommentaries(){
     const [totalComments, setTotalComments] = useState<number>(0)
     const [ commentsPercentage, setCommentsPercentage] = useState<number>(0)
     const fetchTotalComments = async () => {
-        const dbRef = collection(db, "analysis_cache")
-        try{
-            const snapshot = await getCountFromServer(dbRef)
-            const count = snapshot.data().count
-            setTotalComments(count)
+        const dbRef = collection(db, "global_metrics" )
+        try {
+            const docRef = doc(dbRef, "metrics");
+            const snap = await getDoc(docRef);
             
-            console.log(count)
-        }catch(error){
-            console.error("Erro ao tentar pegar o total de comentarios: ", error)
+            if (snap.exists()) {
+                const count = snap.data().total_comments || 0;
+                setTotalComments(count);
+                console.log("Total atual:", count);
+            }
+        } catch (error) {
+            console.error("Erro:", error);
         }
     }
     const commentsPercent = async () => {
-        const dbRef = collection(db, "analysis_cache")
+        const dbRef = collection(db, "global_status")
         const oneMonthBefore = new Date()
         oneMonthBefore.setDate(oneMonthBefore.getDate() - 30)
         try{

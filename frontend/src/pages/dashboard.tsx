@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import type { Alerta } from '../models/Visual';
 import TotalCommentaries from '../components/totalComentaries';
-
+import Infractions from '../components/infractions';
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,19 +49,12 @@ export default function Dashboard() {
       <main className="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
         {/* 2. METRIC CARDS ROW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-            
           < TotalCommentaries />
-              
-            
-            
-          
-          
           <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 flex flex-col justify-between shadow-sm">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-semibold text-[#505f76] tracking-wider uppercase">Infrações Ativas</p>
-                <h3 className="text-[36px] font-bold text-[#ba1a1a] mt-2 tracking-tight">{alertas.length}</h3>
+                <Infractions />
               </div>
               <div className="p-2 text-[#ba1a1a]">
                 <AlertTriangle className="w-5 h-5" />
