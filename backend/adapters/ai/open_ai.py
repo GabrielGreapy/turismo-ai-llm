@@ -99,4 +99,5 @@ class OpenAIAdapter(AIAnalizerProviderAdapter):
         }
         return resultado_ia_agregado
         
+    
              

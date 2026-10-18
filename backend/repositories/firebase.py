@@ -11,6 +11,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
         self.collection_name = "analysis_cache"
         self.global_collection_name = "global_status"
         self.global_doc_id = "metrics" 
+        self.global_alert_collection = "alerts"
     async def get_analysis(self, place_id: str) -> Optional[Dict[str, Any]]:
         doc_ref = self.db.collection(self.collection_name).document(place_id)
         doc = await doc_ref.get()
@@ -26,43 +27,29 @@ class FirebaseReviewRepository(ReviewRepositorie):
 
     async def save_data(self, place_id: str, data: Dict[str, Any]) -> None:
         print(f"💾 [FIREBASE SAVE] Guardando dados em cache para: {place_id}")
-        
         # 1. Salva o Cache Principal (como já estava)
         doc_ref = self.db.collection(self.collection_name).document(place_id)
         await doc_ref.set(data)
         
-        # 2. Extrai as informações de segurança da IA
-        analise_ia = data.get("analise_ia", {}) if isinstance(data.get("analise_ia"), dict) else {}
-        alertas = analise_ia.get("alertas", {})
-        risco = alertas.get("nivel_risco", "Baixo")
-        resumo = alertas.get("resumo", "Sem alertas identificados.")
         
-        # 3. SISTEMA DE INFRAÇÕES (Tickets)
-        incremento_medio = 0
-        if risco in ["Médio", "Alto"]:
-            incremento_medio = 1
-            
-            # Cria um documento na nova coleção de infrações
-            ticket_ref = self.db.collection("infractions_tickets").document() # Gera ID automático
-            
-            ticket_data = {
-                "place_id": place_id,
-                "nivel_risco": risco,
-                "resumo_ia": resumo,
-                "status": "pendente",
-                "data_criacao": firestore.SERVER_TIMESTAMP,
-                "data_resolucao": None
+    async def save_alerts(self, place_id : str, alerts : Dict[str, Any]):
+        if not alerts: return
+        
+        batch = self.db.batch()
+        
+        for alerta in alerts:
+            review_id = alerta.get("review_id")
+            if not review_id:
+                continue
+            doc_ref = self.db.collection(self.global_alert_collection).document(review_id)
+            dados_alertas = {
+                "place_id" : place_id,
+                "review_id" : review_id,
+                "tipo_perigo" : alerta.get("tipo_perigo"),
+                "justificativa" : alerta.get("justificativa")
             }
-            await ticket_ref.set(ticket_data)
-            print(f"🚨 [ALERTA] Nova infração registrada para {place_id}. Status: pendente.")
+            batch.set(doc_ref, dados_alertas)
+        await batch.commit()
+        print(f'[FIREBASE ALERT] {len(alerts)} novos alertas registrados para o local: {place_id}')
             
-       
-        reviews_list = data.get("reviews", [])
-        total_reviews_novas = len(reviews_list) if isinstance(reviews_list, list) else 0
-        
-        doc_ref_global = self.db.collection(self.global_collection_name).document(self.global_doc_id)
-        await doc_ref_global.set({
-            "total_places": firestore.Increment(1),
-            "total_comments": firestore.Increment(total_reviews_novas),
-            "total_infractions_medium": firestore.Increment(incremento_medio)
-        }, merge=True)
+            

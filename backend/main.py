@@ -70,21 +70,24 @@ async def get_spot_reviews(
             return {"total": 0, "reviews": [], "analise_ia": None}
         
         
-        reviews = [r.model_dump() for r in reviews_model]
+        reviews_dict = [r.model_dump() for r in reviews_model]
         
         
         
         
-        ai_analyzed_data = ai_analyzer_adapter.analizar_reviews(texts=reviews)
+        ai_analyzed_data = ai_analyzer_adapter.analizar_reviews(reviews=reviews_model)
         
         result_of_analysis = {
             "id" : place_id,
-            "total": len(reviews),
-            "reviews": reviews,
-            "perigo_score" : ai_analyzed_data.perigo_score,
-            "analise_ia": ai_analyzed_data
+            "total": ai_analyzed_data.get("total_reviews", 0),
+            "resumo" : ai_analyzed_data.get("resumo" , ""),
+            "reviews": reviews_dict,
+            "perigo_score" : ai_analyzed_data.get("perigo_score", 0),
+            
         }
         await repo.save_data(place_id=place_id, data= result_of_analysis)
+        alerts = ai_analyzed_data.get("alertas", [])
+        await repo.save_alerts( place_id = place_id, alerts=alerts)
         
         # 4. Retorna tudo junto para o Frontend
         return result_of_analysis
