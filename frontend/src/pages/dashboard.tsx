@@ -3,18 +3,9 @@ import {
   MessageSquare, AlertTriangle, XCircle, MoreVertical, 
   MapPin, Shield, Home, CheckCircle2, Trash2 
 } from 'lucide-react';
-// Certifique-se de ajustar o caminho da importação do Header caso esteja em outra pasta
-import Header from '../components/Header'; 
-
-interface Alerta {
-  id: number;
-  localidade: string;
-  problema: string;
-  severidade: 'Alto' | 'Médio' | 'Baixo';
-  horario: string;
-  tipo: 'map' | 'shield' | 'home';
-}
-
+import type { Alerta } from '../models/Visual';
+import TotalCommentaries from '../components/totalComentaries';
+import Infractions from '../components/Infractions';
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,36 +38,23 @@ export default function Dashboard() {
     alerta.problema.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  
+
   return (
     <div className="bg-[#F8FAFC] min-h-screen font-sans text-[#1b1c1d]">
       
       {/* O HEADER AGORA FAZ PARTE EXCLUSIVA DESTA TELA */}
-      <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      
 
       <main className="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
         {/* 2. METRIC CARDS ROW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 flex flex-col justify-between shadow-sm">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-semibold text-[#505f76] tracking-wider uppercase">Total de Comentários</p>
-                <h3 className="text-[36px] font-bold text-[#041627] mt-2 tracking-tight">12.4k</h3>
-              </div>
-              <div className="p-2 text-[#74777d]">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-4 text-xs text-[#74777d]">
-              <span className="text-[#128049] font-semibold flex items-center gap-0.5">↗ +12%</span>
-              <span>Últimos 30 dias de processamento AI</span>
-            </div>
-          </div>
-
+          < TotalCommentaries />
           <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 flex flex-col justify-between shadow-sm">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-semibold text-[#505f76] tracking-wider uppercase">Infrações Ativas</p>
-                <h3 className="text-[36px] font-bold text-[#ba1a1a] mt-2 tracking-tight">{alertas.length}</h3>
+                <Infractions />
               </div>
               <div className="p-2 text-[#ba1a1a]">
                 <AlertTriangle className="w-5 h-5" />

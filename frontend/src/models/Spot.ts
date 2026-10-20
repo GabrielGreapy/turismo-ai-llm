@@ -1,5 +1,3 @@
-
-
 export interface TouristSpot {
   id: string;
   city: string;
@@ -10,4 +8,10 @@ export interface TouristSpot {
   rating?: number;
   lat : number;
   lng : number
+}
+export interface Review {
+  author: string;
+  rating: number;
+  text: string;
+  date: string;
 }
