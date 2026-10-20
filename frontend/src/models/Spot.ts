@@ -9,3 +9,9 @@ export interface TouristSpot {
   lat : number;
   lng : number
 }
+export interface Review {
+  author: string;
+  rating: number;
+  text: string;
+  date: string;
+}

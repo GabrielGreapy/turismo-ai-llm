@@ -19,6 +19,8 @@ import { useSearch } from '../contexts/SearchContext';
 export default function CitySearch() {
   const navigate = useNavigate(); // 2. Inicialização do hook
   const {searchTerm, setSearchTerm } = useSearch()
+  const [ currentPage, setCurrentPage] = useState<number>(0)
+  const ITEMS_PER_PAGE = 20;
   const [cityName, setCityName] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [spots, setSpots] = useState<TouristSpot[]>([]);
@@ -85,8 +87,10 @@ export default function CitySearch() {
     setHasSearched(true);
     setCityName(searchTerm)
     const results = await GooglePlaceService.fetchSpots( searchTerm);
-    setSpots(results)
+    setSpots(results);
     setLoading(false);
+    setCurrentPage(1);
+    
     
   };
 
@@ -96,6 +100,10 @@ export default function CitySearch() {
     setSearchTerm(spot.city)
     navigate(`/spot/${spot.id}`, { state: { spot } });
   };
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+  const visibleSpots = spots.slice(offset, offset + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(spots.length / ITEMS_PER_PAGE);
+  
 
   return (
     <div className="min-h-screen bg-[#fbf9fa] text-[#1b1c1d] font-sans antialiased selection:bg-[#d2e4fb]">
@@ -188,40 +196,67 @@ export default function CitySearch() {
 
 
           {!loading && spots.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {spots.map((spot) => (
-                <div 
-                  key={spot.id} 
-                  onClick={() => handleSpotClick(spot)} // 4. Clique que dispara a navegação
-                  className="bg-white rounded-xl border border-[#c4c6cd] overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col"
-                >
-                  <div className="h-48 bg-[#e4e2e3] relative overflow-hidden">
-                    <img 
-                      src={spot.image_url} 
-                      alt={spot.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {spot.rating && (
-                      <span className="absolute top-3 right-3 bg-[#041627]/90 text-white text-[11px] font-bold px-2 py-1 rounded flex items-center gap-1 backdrop-blur-sm">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        {spot.rating}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-lg font-bold text-[#1b1c1d] tracking-tight group-hover:text-[#041627] transition-colors">
-                          {spot.name}
-                        </h4>
-                        <ExternalLink className="w-4 h-4 text-[#74777d] group-hover:text-[#041627] transition-colors" />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {visibleSpots.map((spot) => (
+                  <div 
+                    key={spot.id} 
+                    onClick={() => handleSpotClick(spot)} // 4. Clique que dispara a navegação
+                    className="bg-white rounded-xl border border-[#c4c6cd] overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col"
+                  >
+                    <div className="h-48 bg-[#e4e2e3] relative overflow-hidden">
+                      <img 
+                        src={spot.image_url} 
+                        alt={spot.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {spot.rating && (
+                        <span className="absolute top-3 right-3 bg-[#041627]/90 text-white text-[11px] font-bold px-2 py-1 rounded flex items-center gap-1 backdrop-blur-sm">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          {spot.rating}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-lg font-bold text-[#1b1c1d] tracking-tight group-hover:text-[#041627] transition-colors">
+                            {spot.name}
+                          </h4>
+                          <ExternalLink className="w-4 h-4 text-[#74777d] group-hover:text-[#041627] transition-colors" />
+                        </div>
+                        <p className="text-xs text-[#44474c] mt-1.5 leading-relaxed">{spot.description}</p>
                       </div>
-                      <p className="text-xs text-[#44474c] mt-1.5 leading-relaxed">{spot.description}</p>
                     </div>
                   </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-6 border-t border-[#c4c6cd] mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-white border border-[#c4c6cd] text-xs font-bold rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-all"
+                  >
+                    Anterior
+                  </button>
+
+                  <span className="text-xs font-semibold text-[#44474c]">
+                    Página {currentPage} de {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-white border border-[#c4c6cd] text-xs font-bold rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-all"
+                  >
+                    Próxima
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </section>
       </main>

@@ -4,7 +4,8 @@ from typing import List
 class AlertaItemModel(BaseModel):
     descricao: str
     citacao: str
-    tag: str
+    nivel_risco_alerta: str
+    tag : str
     
 class AnalyzeAIModel(BaseModel):
     nivel_risco : str
