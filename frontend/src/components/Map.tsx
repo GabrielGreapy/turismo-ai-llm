@@ -53,11 +53,7 @@ export default function SpotsMap({
         markersRef.current.forEach(m => { m.map = null });
         markersRef.current = [];
 
-        const pin = new PinElement({
-          background: "#4285F4",
-          borderColor: "#1A4D8F",
-          glyphColor: "#fff",
-        });
+        
 
         // MODO DETALHES (Modo Ponto Único)
         if (selectedSpot && selectedSpot.lat) {
@@ -65,13 +61,21 @@ export default function SpotsMap({
           
           map.setCenter(position);
           map.setZoom(17); 
-
+          const rating = selectedSpot.rating;
+            
+          const { background, borderColor, glyphColor } = collorChoosing(rating ?? 0);
+          const spotPin = new PinElement({
+              background,
+              borderColor,
+              glyphColor,
+            });
           const marker = new AdvancedMarkerElement({
             position,
             map,
             title: selectedSpot.name,
-            content : pin.element,
+            content : spotPin,
           });
+          console.log(rating)
 
           // CORRIGIDO: Usando direto a classe InfoWindow
           const infoWindow = new InfoWindow({
@@ -114,7 +118,7 @@ export default function SpotsMap({
               position,
               map,
               title: spot.name,
-              content: spotPin.element, // Usa o elemento recém-criado
+              content: spotPin, // Usa o elemento recém-criado
             });
 
             marker.addListener('click', () => {
