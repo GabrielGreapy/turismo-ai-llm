@@ -1,28 +1,43 @@
-
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-interface userContextType {
-    userCity : string | null,
-
+export interface cityChoice {
+    name : string,
+    lat : number,
+    lng : number
 }
 
-const UserContext = createContext<userContextType | undefined>(undefined);
+
+export interface userAuth{
+    uid : string,
+    email : string,
+    userName : string,
+    cityChoiceForAnalysis : cityChoice | null;
+}
 
 
-export function SearchContextProvider({ children } : { children : ReactNode }) {
-    const [userCity, setUserCity] = useState<string>('Picuí')
+interface AuthContextData{
+    currentUser : userAuth | null,
+    setCurrentUser : (user : userAuth) => void;
+    
+}
+
+const AuthContext = createContext<AuthContextData | null>(null);
+
+export function AuthContextProvider( {children} : { children:ReactNode}){
+    const [currentUser, setCurrentUser] =  useState<userAuth | null>(null)
 
     return(
-        <UserContext.Provider value={{ userCity }}>
-            {children}
-        </UserContext.Provider>
+        <AuthContext.Provider value={{ currentUser, setCurrentUser}}>
+            { children }
+        </AuthContext.Provider>
     )
+
 }
 
-export function useUser(){
-    const context = useContext(UserContext)
-    if(!context) {
-        throw new Error("useSearch deve ser utilizado dentro de um SearchContextProvider");
+export function useAuth(){
+    const context = useContext(AuthContext);
+    if(!context){
+        throw new Error("O context do auth não devia estar aí...")
     }
-    return context
+    return context;
 }
