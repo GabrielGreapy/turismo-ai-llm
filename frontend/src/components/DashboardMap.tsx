@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { TouristSpot } from '../models/Spot';
 
+
 interface SpotsMapProps {
   spots: TouristSpot[];
   selectedSpot?: TouristSpot | null;
@@ -15,85 +16,117 @@ export default function DashboardSpotsMap({
   height = "400px" 
 }: SpotsMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  
   const googleMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
 
   useEffect(() => {
-    if (!mapRef.current || !(window as any).google?.maps) return;
+    let cancelled = false;
 
-    // Inicializa o mapa se ainda não existir
-    if (!googleMapRef.current) {
-      googleMapRef.current = new (window as any).google.maps.Map(mapRef.current, {
-        zoom: selectedSpot ? 16 : 12,
-        center: selectedSpot 
-          ? { lat: selectedSpot.lat, lng: selectedSpot.lng }
-          : { lat: -14.235, lng: -51.925 }, // Centro do Brasil como fallback
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true,
-      });
-    }
+    const initMap = async () => {
+      if (!mapRef.current || !(window as any).google?.maps) return;
 
-    const map = googleMapRef.current;
+      try {
+        const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
+        const { Map, InfoWindow } = await (window as any).google.maps.importLibrary("maps");
+        const { LatLngBounds } = await (window as any).google.maps.importLibrary("core");
 
-    // Limpa marcadores antigos
-    markersRef.current.forEach(m => m.setMap(null));
-    markersRef.current = [];
+        if (cancelled) return;
 
-    // MODO DETALHES (Modo Ponto Único)
-    if (selectedSpot && selectedSpot.lat) {
-      const position = { lat: selectedSpot.lat, lng: selectedSpot.lng };
-      
-      map.setCenter(position);
-      map.setZoom(17); // Zoom bem focado no lugar
+        if (!googleMapRef.current) {
+          googleMapRef.current = new Map(mapRef.current, {
+            mapId: 'DEMO_MAP_ID',
+            zoom: selectedSpot ? 16 : 12,
+            // Fallback de segurança caso userCity não tenha lat/lng válidos
+            center: { lat: -14.235, lng: -51.925 },
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+          });
+        }
 
-      const marker = new (window as any).google.maps.Marker({
-        position,
-        map,
-        title: selectedSpot.name,
-        animation: (window as any).google.maps.Animation.DROP,
-      });
+        const map = googleMapRef.current;
 
-      const infoWindow = new (window as any).google.maps.InfoWindow({
-        content: `
-          <div style="padding: 4px; max-width: 180px;">
-            <strong style="font-size: 13px; color: #1b1c1d;">${selectedSpot.name}</strong>
-            <p style="font-size: 11px; color: #54647a; margin-top: 4px;">${selectedSpot.description}</p>
-          </div>
-        `,
-      });
+        markersRef.current.forEach(m => { m.map = null });
+        markersRef.current = [];
 
-      marker.addListener('click', () => infoWindow.open(map, marker));
-      infoWindow.open(map, marker);
-      markersRef.current.push(marker);
-      return;
-    }
+        // MODO DETALHES (Modo Ponto Único)
+        if (selectedSpot && selectedSpot.lat) {
+          const position = { lat: selectedSpot.lat, lng: selectedSpot.lng };
+          
+          map.setCenter(position);
+          map.setZoom(17); 
 
-    // MODO PESQUISA (Múltiplos Pontos)
-    if (spots.length > 0) {
-      const bounds = new (window as any).google.maps.LatLngBounds();
+          const spotPin = new PinElement({
+            background: "#4285F4",
+            borderColor: "#1A4D8F",
+            glyphColor: "#fff",
+          });
 
-      spots.forEach((spot) => {
-        if (!spot.lat || !spot.lng) return;
+          const marker = new AdvancedMarkerElement({
+            position,
+            map,
+            title: selectedSpot.name,
+            content: spotPin.element,
+          });
 
-        const position = { lat: spot.lat, lng: spot.lng };
-        bounds.extend(position);
+          const infoWindow = new InfoWindow({
+            content: `
+              <div style="padding: 4px; max-width: 180px;">
+                <strong style="font-size: 13px; color: #1b1c1d;">${selectedSpot.name}</strong>
+                <p style="font-size: 11px; color: #54647a; margin-top: 4px;">${selectedSpot.description}</p>
+              </div>
+            `,
+          });
 
-        const marker = new (window as any).google.maps.Marker({
-          position,
-          map,
-          title: spot.name,
-        });
+          marker.addEventListener('gmp-click', () => infoWindow.open(map, marker));
+          infoWindow.open(map, marker);
+          markersRef.current.push(marker);
+          return;
+        }
 
-        marker.addListener('click', () => {
-          if (onSpotClick) onSpotClick(spot);
-        });
+        // MODO PESQUISA (Múltiplos Pontos)
+        if (spots.length > 0) {
+          const bounds = new LatLngBounds();
 
-        markersRef.current.push(marker);
-      });
+          spots.forEach((spot) => {
+            if (!spot.lat || !spot.lng) return;
 
-      map.fitBounds(bounds);
-    }
+            const position = { lat: spot.lat, lng: spot.lng };
+            bounds.extend(position);
+
+            const spotPin = new PinElement({
+              background: "#4285F4",
+              borderColor: "#1A4D8F",
+              glyphColor: "#fff",
+            });
+
+            const marker = new AdvancedMarkerElement({
+              position,
+              map,
+              title: spot.name,
+              content: spotPin.element,
+            });
+
+            marker.addEventListener('gmp-click', () => {
+              if (onSpotClick) onSpotClick(spot);
+            });
+
+            markersRef.current.push(marker);
+          });
+
+          map.fitBounds(bounds);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar mapa", error);
+      }
+    };
+
+    initMap();
+
+    return () => {
+      cancelled = true;
+    };
   }, [spots, selectedSpot]);
 
   return (
