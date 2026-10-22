@@ -17,6 +17,7 @@ import DashboardSpotsMap from '../components/DashboardMap';
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
   const [searchTerm, setSearchTerm] = useState('');
+  
   const [periodo, setPeriodo] = useState('Esta Semana');
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [spots, setSpots] = useState<TouristSpot[]>([])
