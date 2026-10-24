@@ -4,17 +4,17 @@ import { TrendingUp, Search, Bell, HelpCircle, LogOut, User } from 'lucide-react
 import { signOut } from 'firebase/auth'; // Import do método de logout do Firebase
 import { auth } from '../firebaseConfig'; // Substitui a importação do supabase
 import { useProfile } from '../hooks/useProfile';
-
+import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
 
 
 export default function Header() {
   const [notificacoes, setNotificacoes] = useState(3);
   const [menuPerfilAberto, setMenuPerfilAberto] = useState(false);
-  
+  const currentUser = useAuth()
   const navigate = useNavigate();
   const { profile, loading } = useProfile(); // Puxa os dados reais do banco ou fallback
-  
+  console.log(currentUser.currentUser)
   const { searchTerm, setSearchTerm } = useSearch()
 
   const handleLogout = async () => {
@@ -104,7 +104,7 @@ export default function Header() {
         <div className="flex items-center gap-3 border-l border-[#E2E8F0] pl-6 relative">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-[#1b1c1d]">
-              {loading ? 'Carregando...' : (profile?.name || 'Novo Usuário')}
+              { currentUser.currentUser?.userName }
             </p>
           </div>
           
@@ -132,7 +132,7 @@ export default function Header() {
                 {/* Informações visíveis apenas em telas menores (Mobile) */}
                 <div className="px-4 py-2 border-b border-[#E2E8F0] sm:hidden">
                   <p className="text-sm font-semibold text-[#1b1c1d]">
-                    {loading ? 'Carregando...' : (profile?.name || 'Novo Usuário')}
+                    { currentUser.currentUser?.userName }
                   </p>
                 </div>
 

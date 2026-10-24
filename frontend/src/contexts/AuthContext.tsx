@@ -1,7 +1,7 @@
-import {  signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {  signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { auth} from "../firebaseConfig";
-import { getUserDocument, setPersistenceType, setUserDocumentOnRegister } from "../utils/Firebase";
+import { getUserDocument, setPersistenceType, setUserDocumentOnRegister, userAuthChange } from "../utils/Firebase";
 
 export interface cityChoice {
     name : string,
@@ -32,6 +32,23 @@ const AuthContext = createContext<AuthContextData | null>(null);
 export function AuthContextProvider( {children} : { children:ReactNode}){
     const [currentUser, setCurrentUser] =  useState<userAuth | null>(null)
     const [loading, setLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+      setLoading(true)
+      const unsubscribe = onAuthStateChanged( auth, async (firebaseUser)  => {
+        userAuthChange(firebaseUser, setCurrentUser);
+        setLoading(false);
+        
+
+      })
+
+      return () => unsubscribe();
+    },[])
+
+    
+
+
+
     const signIn = async (email : string, password : string, rememberMe : boolean) => {
         setLoading(true);
         try {
@@ -40,7 +57,7 @@ export function AuthContextProvider( {children} : { children:ReactNode}){
     
             // Executa a autenticação no Firebase
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const data = await getUserDocument(userCredential);
+            const data = await getUserDocument(userCredential.user.uid);
             console.log(data)
             const treatedCityChoice : cityChoice | null = data?.cityChoiceForAnalysis ? {
                 name : data?.cityChoiceForAnalysis.name,
@@ -61,6 +78,7 @@ export function AuthContextProvider( {children} : { children:ReactNode}){
             // Tratamento amigável para mensagens de erro comuns do Firebase
         } finally {
             setLoading(false);
+            console.log(currentUser)
         }
         };
     
@@ -97,6 +115,7 @@ export function AuthContextProvider( {children} : { children:ReactNode}){
     )
 
 }
+
 
 export function useAuth(){
     const context = useContext(AuthContext);

@@ -8,8 +8,8 @@ export const setPersistenceType = async (rememberMe : boolean) => {
 }
 
 
-export async function getUserDocument( userCredential : any){
-    const docSnap = await getDoc(doc(db, 'users', userCredential.user.uid))
+export async function getUserDocument( userUid : string){
+    const docSnap = await getDoc(doc(db, 'users', userUid))
     const data = docSnap.data()
     console.log(data)
     return data;
@@ -27,4 +27,25 @@ export async function setUserDocumentOnRegister( userCredential : any, city : ci
     })
 
     console.log(`Documento salvo no firebase com id: ${userCredential.user.uid}`)
+}
+
+export const userAuthChange = async (firebaseUser : any, setCurrentUser : any) => {
+    if(firebaseUser){
+        const data = await getUserDocument(firebaseUser)
+        const cityChoice = data?.cityChoiceForAnalysis
+        const treatedCityChoice : cityChoice | null = cityChoice ? {
+            name : cityChoice.name,
+            lat : cityChoice.lat,
+            lng : cityChoice.lng,
+        } : null;
+        setCurrentUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email ?? '',
+            userName: firebaseUser.displayName ?? firebaseUser.email ?? '',
+            cityChoiceForAnalysis: treatedCityChoice,
+        })
+
+    }else{
+        setCurrentUser(null)
+    }
 }
