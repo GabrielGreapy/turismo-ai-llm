@@ -31,7 +31,7 @@ export async function setUserDocumentOnRegister( userCredential : any, city : ci
 
 export const userAuthChange = async (firebaseUser : any, setCurrentUser : any) => {
     if(firebaseUser){
-        const data = await getUserDocument(firebaseUser)
+        const data = await getUserDocument(firebaseUser.uid)
         const cityChoice = data?.cityChoiceForAnalysis
         const treatedCityChoice : cityChoice | null = cityChoice ? {
             name : cityChoice.name,

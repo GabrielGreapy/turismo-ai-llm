@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { TrendingUp, Search, Bell, HelpCircle, LogOut, User } from 'lucide-react';
 import { signOut } from 'firebase/auth'; // Import do método de logout do Firebase
@@ -13,7 +13,7 @@ export default function Header() {
   const [menuPerfilAberto, setMenuPerfilAberto] = useState(false);
   const currentUser = useAuth()
   const navigate = useNavigate();
-  const { profile, loading } = useProfile(); // Puxa os dados reais do banco ou fallback
+  const { profile } = useProfile(); // Puxa os dados reais do banco ou fallback
   console.log(currentUser.currentUser)
   const { searchTerm, setSearchTerm } = useSearch()
 
