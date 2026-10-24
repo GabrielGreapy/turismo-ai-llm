@@ -1,6 +1,7 @@
-import { browserLocalPersistence, setPersistence, signInWithEmailAndPassword, browserSessionPersistence } from "firebase/auth";
+import {  signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { auth } from "../firebaseConfig";
+import { auth} from "../firebaseConfig";
+import { getUserDocument, setPersistenceType, setUserDocumentOnRegister } from "../utils/Firebase";
 
 export interface cityChoice {
     name : string,
@@ -22,8 +23,8 @@ interface AuthContextData{
     currentUser : userAuth | null;
     setCurrentUser : (user : userAuth) => void;
     loading : boolean;
-    login : (email : string, password : string, rememberMe : boolean) => Promise<void>;
-    
+    signIn : (email : string, password : string, rememberMe : boolean) => Promise<void>;
+    signUp : ( email : string, password : string, city : cityChoice) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData | null>(null);
@@ -31,33 +32,57 @@ const AuthContext = createContext<AuthContextData | null>(null);
 export function AuthContextProvider( {children} : { children:ReactNode}){
     const [currentUser, setCurrentUser] =  useState<userAuth | null>(null)
     const [loading, setLoading] = useState<boolean>(false);
-    const login = async (email : string, password : string, rememberMe : boolean) => {
+    const signIn = async (email : string, password : string, rememberMe : boolean) => {
         setLoading(true);
         try {
             // Configura a persistência baseada no checkbox "Lembrar-me"
-            const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
-            await setPersistence(auth, persistenceType);
+            setPersistenceType(rememberMe)
     
             // Executa a autenticação no Firebase
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            
+            const data = await getUserDocument(userCredential);
+            console.log(data)
+            const treatedCityChoice : cityChoice | null = data?.cityChoiceForAnalysis ? {
+                name : data?.cityChoiceForAnalysis.name,
+                lat : data?.cityChoiceForAnalysis.lat ,
+                lng : data?.cityChoiceForAnalysis.lng ,
+            } : null;
             console.log('Login efetuado com sucesso no Firebase:', userCredential.user);
             setCurrentUser({
                 uid : userCredential.user.uid,
-                email : email,
+                email : userCredential.user.email ?? email,
                 userName : userCredential.user.displayName ?? email,
-                cityChoiceForAnalysis : null,
+                cityChoiceForAnalysis : treatedCityChoice,
             })
             
         } catch (error: any) {
             console.error('Erro ao fazer login:', error);
-            throw new error;
+            throw error;
             // Tratamento amigável para mensagens de erro comuns do Firebase
         } finally {
             setLoading(false);
         }
         };
     
+    const signUp = async ( email : string, password : string, city : cityChoice) => {
+        setLoading(true)
+        try{
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+           
+            await setUserDocumentOnRegister(userCredential, city)
+            setCurrentUser({
+                uid : userCredential.user.uid,
+                email : userCredential.user.email ?? email,
+                userName : userCredential.user.displayName ?? email,
+                cityChoiceForAnalysis : city ?? null,
+            })
+
+        } catch(error){
+            console.error(`Erro no processo de registrar conta, erro:  ${error}`);
+        }finally{
+            setLoading(false)
+        }
+    }
 
 
 
@@ -66,7 +91,7 @@ export function AuthContextProvider( {children} : { children:ReactNode}){
 
 
     return(
-        <AuthContext.Provider value={{ currentUser, setCurrentUser, login, loading}}>
+        <AuthContext.Provider value={{ currentUser, setCurrentUser, signIn, loading, signUp}}>
             { children }
         </AuthContext.Provider>
     )
