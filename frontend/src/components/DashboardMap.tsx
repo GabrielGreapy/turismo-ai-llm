@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { TouristSpot } from '../models/Spot';
-
+import { useAuth } from '../contexts/AuthContext';
+import { collorChoosing } from '../utils/collorChoosingOnMarker';
 
 interface SpotsMapProps {
   spots: TouristSpot[];
@@ -16,15 +17,47 @@ export default function DashboardSpotsMap({
   height = "400px" 
 }: SpotsMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  
+  const auth = useAuth();
   const googleMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const lat = auth.currentUser?.cityChoiceForAnalysis?.lat
+  const lng = auth.currentUser?.cityChoiceForAnalysis?.lng
+
+
+  const [apiReady, setApiReady] = useState<boolean>(false)
+
+
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+    if((window as any).google?.maps?.importLibrary){
+      setApiReady(true);
+      return;
+    }
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+
+    if(!existingScript){
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&v=weekly&loading=async`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+
+    }
+    const checkInterval = setInterval(() => {
+      if ((window as any).google?.maps?.importLibrary) {
+        setApiReady(true);
+        clearInterval(checkInterval);
+      }
+    }, 100);
+    return () => clearInterval(checkInterval);
+  }, [])
+
 
   useEffect(() => {
     let cancelled = false;
-
+    
     const initMap = async () => {
-      if (!mapRef.current || !(window as any).google?.maps) return;
+      if (!mapRef.current || !(window as any).google?.maps || lat === undefined || lng === undefined) return;
 
       try {
         const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
@@ -32,16 +65,16 @@ export default function DashboardSpotsMap({
         const { LatLngBounds } = await (window as any).google.maps.importLibrary("core");
 
         if (cancelled) return;
+        
 
         if (!googleMapRef.current) {
           googleMapRef.current = new Map(mapRef.current, {
             mapId: 'DEMO_MAP_ID',
             zoom: selectedSpot ? 16 : 12,
-            // Fallback de segurança caso userCity não tenha lat/lng válidos
-            center: { lat: -14.235, lng: -51.925 },
+            center: { lat: lat , lng: lng },
             mapTypeControl: false,
             streetViewControl: false,
-            fullscreenControl: true,
+            
           });
         }
 
@@ -56,19 +89,21 @@ export default function DashboardSpotsMap({
           
           map.setCenter(position);
           map.setZoom(17); 
-
+          const rating = selectedSpot.rating;
+            
+          const { background, borderColor, glyphColor } = collorChoosing(rating ?? 0);
           const spotPin = new PinElement({
-            background: "#4285F4",
-            borderColor: "#1A4D8F",
-            glyphColor: "#fff",
-          });
-
+              background,
+              borderColor,
+              glyphColor,
+            });
           const marker = new AdvancedMarkerElement({
             position,
             map,
             title: selectedSpot.name,
-            content: spotPin.element,
+            content : spotPin,
           });
+          console.log(rating)
 
           const infoWindow = new InfoWindow({
             content: `
@@ -95,17 +130,21 @@ export default function DashboardSpotsMap({
             const position = { lat: spot.lat, lng: spot.lng };
             bounds.extend(position);
 
+            const rating = spot.rating;
+            
+            const { background, borderColor, glyphColor } = collorChoosing(rating ?? 0);
+            
+            
             const spotPin = new PinElement({
-              background: "#4285F4",
-              borderColor: "#1A4D8F",
-              glyphColor: "#fff",
+              background,
+              borderColor,
+              glyphColor,
             });
-
             const marker = new AdvancedMarkerElement({
               position,
               map,
               title: spot.name,
-              content: spotPin.element,
+              content: spotPin,
             });
 
             marker.addEventListener('gmp-click', () => {
@@ -127,7 +166,7 @@ export default function DashboardSpotsMap({
     return () => {
       cancelled = true;
     };
-  }, [spots, selectedSpot]);
+  }, [spots, selectedSpot, lat, lng]);
 
   return (
     <div 

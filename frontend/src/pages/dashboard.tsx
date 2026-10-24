@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { 
-   AlertTriangle, XCircle, MoreVertical, 
+   AlertTriangle, MoreVertical, 
   MapPin, Shield, Home, CheckCircle2, Trash2, Clock, 
   RefreshCw, Radio, Sliders, Maximize,  
    BarChart2, Check, Hourglass, Users, Flame, 
@@ -16,7 +16,7 @@ import type { TouristSpot } from '../models/Spot';
 import DashboardSpotsMap from '../components/DashboardMap';
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm] = useState('');
   
   const [periodo, setPeriodo] = useState('Esta Semana');
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
