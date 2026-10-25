@@ -107,7 +107,8 @@ export default function Register() {
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng()
           });
-          setCityName(place.name);
+          console.log(`${place.formatted_address}`)
+          setCityName(place.formatted_address);
         } else {
           console.error("Variável Place ou geometria não existe.");
           setCityInfo(null);
