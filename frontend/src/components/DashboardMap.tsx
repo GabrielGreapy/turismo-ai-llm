@@ -166,7 +166,7 @@ export default function DashboardSpotsMap({
     return () => {
       cancelled = true;
     };
-  }, [spots, selectedSpot, lat, lng]);
+  }, [spots, selectedSpot, lat, lng, apiReady]);
 
   return (
     <div 
