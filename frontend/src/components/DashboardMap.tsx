@@ -2,20 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import type { TouristSpot } from '../models/Spot';
 import { useAuth } from '../contexts/AuthContext';
 import { collorChoosing } from '../utils/collorChoosingOnMarker';
+import { GooglePlaceService } from '../services/GooglePlaceServices';
 
-interface SpotsMapProps {
+
+interface SpotsMapDashboardProps {
   spots: TouristSpot[];
   selectedSpot?: TouristSpot | null;
   onSpotClick?: (spot: TouristSpot) => void;
   height?: string;
+  setSpots : any;
 }
 
 export default function DashboardSpotsMap({ 
   spots, 
   selectedSpot, 
   onSpotClick, 
-  height = "400px" 
-}: SpotsMapProps) {
+  height = "400px" ,
+  setSpots
+}: SpotsMapDashboardProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const auth = useAuth();
   const googleMapRef = useRef<any>(null);
@@ -79,7 +83,9 @@ export default function DashboardSpotsMap({
         }
 
         const map = googleMapRef.current;
-
+        
+        
+        
         markersRef.current.forEach(m => { m.map = null });
         markersRef.current = [];
 
@@ -167,6 +173,19 @@ export default function DashboardSpotsMap({
       cancelled = true;
     };
   }, [spots, selectedSpot, lat, lng, apiReady]);
+
+  useEffect(() => {
+    const fetchCitySpots = async () => {
+      const cityName = auth.currentUser?.cityChoiceForAnalysis?.name ?? null
+          let results
+          if(cityName){
+            results = await GooglePlaceService.fetchSpots(cityName)
+          }
+          setSpots(results)
+    }
+    fetchCitySpots();
+  },[])
+
 
   return (
     <div 

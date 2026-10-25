@@ -48,6 +48,8 @@ export default function Dashboard() {
     alerta.problema.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  
+
   return (
     <div className="bg-[#F8FAFC] text-[#1b1c1d] min-h-screen flex flex-col antialiased selection:bg-[#041627] selection:text-white font-sans">
       {/* Estilos injetados para animações globais (Radar) e Scrollbar */}
@@ -182,6 +184,7 @@ export default function Dashboard() {
             spots={spots} 
             onSpotClick={() => {}} 
             height='100%'
+            setSpots={setSpots}
             />
 
            
