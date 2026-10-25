@@ -9,7 +9,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const {login} = useAuth();
+  const {signIn} = useAuth();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -17,7 +17,7 @@ export default function Login() {
 
     try {
       // Configura a persistência baseada no checkbox "Lembrar-me"
-      await login( email, password, rememberMe)
+      await signIn( email, password, rememberMe)
       
       // Redireciona para a Dashboard após o login bem-sucedido
       navigate('/dashboard');
