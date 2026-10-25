@@ -61,7 +61,7 @@ export default function DashboardSpotsMap({
     let cancelled = false;
     
     const initMap = async () => {
-      if (!mapRef.current || !(window as any).google?.maps || lat === undefined || lng === undefined) return;
+      if (!mapRef.current || !(window as any).google?.maps || lat === undefined || lng === undefined || !apiReady) return;
 
       try {
         const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
@@ -71,7 +71,7 @@ export default function DashboardSpotsMap({
         if (cancelled) return;
         
 
-        if (!googleMapRef.current) {
+        if (!googleMapRef.current ) {
           googleMapRef.current = new Map(mapRef.current, {
             mapId: 'DEMO_MAP_ID',
             zoom: selectedSpot ? 16 : 12,
@@ -184,7 +184,7 @@ export default function DashboardSpotsMap({
           setSpots(results)
     }
     fetchCitySpots();
-  },[])
+  },[auth.currentUser?.cityChoiceForAnalysis?.name, setSpots])
 
 
   return (
