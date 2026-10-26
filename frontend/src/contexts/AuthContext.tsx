@@ -31,12 +31,12 @@ const AuthContext = createContext<AuthContextData | null>(null);
 
 export function AuthContextProvider( {children} : { children:ReactNode}){
     const [currentUser, setCurrentUser] =  useState<userAuth | null>(null)
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
       setLoading(true)
-      const unsubscribe = onAuthStateChanged( auth, async (firebaseUser)  => {
-        userAuthChange(firebaseUser, setCurrentUser);
+      const unsubscribe = onAuthStateChanged( auth, async (firebaseUser) => {
+        await userAuthChange(firebaseUser, setCurrentUser);
         setLoading(false);
         
 
