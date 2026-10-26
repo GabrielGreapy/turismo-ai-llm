@@ -13,7 +13,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [cityInfo, setCityInfo] = useState<{ lat: number, lng: number } | null>(null); 
+  const [cityInfo, setCityInfo] = useState<{ lat: number, lng: number, placeId : string } | null>(null); 
   const [cityName, setCityName] = useState<string | null>(null); 
   
   // Estados de requisição e feedback
@@ -96,16 +96,17 @@ export default function Register() {
     try {
       const autocomplete = new (window as any).google.maps.places.Autocomplete(inputRef.current, {
         types: ['(cities)'],
-        fields: ['formatted_address', 'geometry', 'name'],
+        fields: ['formatted_address', 'geometry', 'name', "place_id"],
       });
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        if (place && place.geometry && place.geometry.location) {
+        if (place && place.geometry && place.geometry.location && place.place_id) {
           // Extração correta das coordenadas invocando lat() e lng()
           setCityInfo({
             lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
+            lng: place.geometry.location.lng(),
+            placeId : place.place_id
           });
           console.log(`${place.formatted_address}`)
           setCityName(place.formatted_address);
@@ -139,6 +140,7 @@ export default function Register() {
       name: cityName,
       lat: cityInfo.lat,
       lng: cityInfo.lng,
+      placeId : cityInfo.placeId
     }
 
     try {
