@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Header from '../components/Header';
+
 import { useProfile } from '../hooks/useProfile';
 import { 
   User, 
@@ -188,7 +188,7 @@ export default function ProfileSettings() {
 
   return (
     <div className="min-h-screen bg-[#fbf9fa] text-[#1b1c1d] font-sans antialiased selection:bg-[#d2e4fb]">
-      <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      
 
       <main className="max-w-4xl mx-auto py-8 px-6">
         <div className="mb-8">
