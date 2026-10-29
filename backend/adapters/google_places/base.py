@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class GooglePlaces(ABC):
+class GooglePlacesProviderAdapter(ABC):
     
     @abstractmethod
     def get_city_spots_ids():

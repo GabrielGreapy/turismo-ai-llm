@@ -4,10 +4,11 @@ from datetime import datetime, timezone
 from google.cloud import firestore
 from adapters.google_places.google_places import GooglePlacesAdapter
 class CityDeepAnalysis:
-    def __init__(self, db_repo: FirebaseReviewRepository, apify_adapter, google_adapter):
+    def __init__(self, db_repo: FirebaseReviewRepository, apify_adapter, google_adapter, llm_adapter):
         self.db = db_repo
         self.apify = apify_adapter
         self.google = google_adapter
+        self. llm =  llm_adapter
 
     async def request_deep_analysis(self, place_id: str, force_refresh: bool = False):
         city_data = await self.db.get_deep_analysis(place_id)
@@ -25,7 +26,7 @@ class CityDeepAnalysis:
                 
         
         await self.db.update_deep_analysis(place_id, "processing")
-            
+        return {"status": "started", "message": "Varredura profunda iniciada no background."}
         
     async def execute_heavy_analysis(self, place_id : str, city_name : str, spot_ids : list):
         try:
@@ -57,7 +58,7 @@ class CityDeepAnalysis:
                 await self.db.save_alerts(place_id, analise_ia["alertas"])
             
             # 5. Libera o banco mudando para idle (Isso vai avisar o React!)
-            await self.db.update_deep_analysis_status(place_id, "idle")
+            await self.db.update_deep_analysis(place_id, "idle")
             print(f"[SUCESSO] Análise da cidade {city_name} concluída.")
             
         except Exception as e:

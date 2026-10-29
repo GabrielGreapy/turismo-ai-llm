@@ -12,7 +12,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
         self.global_collection_name = "global_status"
         self.global_doc_id = "metrics" 
         self.global_alert_collection = "alerts"
-        
+        self.deep_analysis_collection = "deep_analysis_status"
         
     async def get_analysis(self, place_id: str) -> Optional[Dict[str, Any]]:
         doc_ref = self.db.collection(self.collection_name).document(place_id)
@@ -57,7 +57,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
         
     async def get_deep_analysis( self, place_id : str, ) -> Optional[Dict[str, any]]:
         doc_ref = self.db.collection(self.deep_analysis_collection).document(place_id)
-        doc = doc_ref.get()
+        doc = await doc_ref.get()
         if doc.exists:
             print(f"🔍 [DEEP ANALYSIS] Controle encontrado para: {place_id}")
             return doc.to_dict()

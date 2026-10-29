@@ -14,6 +14,7 @@ from adapters.reviews.apify import ApifyReviewsAdapter
 from adapters.reviews.base import ReviewProviderAdapter
 from adapters.ai.base import AIAnalizerProviderAdapter
 from adapters.ai.open_ai import OpenAIAdapter
+from adapters.google_places.google_places import GooglePlacesAdapter
 
 # Services (Importe o serviço que criamos)
 from services.deep_analysis_services import CityDeepAnalysis
@@ -52,13 +53,20 @@ def get_reviews_adapter() -> ReviewProviderAdapter:
         raise HTTPException(status_code=500, detail="Token do Apify não configurado.")
     return ApifyReviewsAdapter(token_apify=token)
 
+def get_google_places_adapter() -> GooglePlacesAdapter:
+    api_key = os.getenv("GOOGLE_PLACES_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Key da api do google maps não foi configurada.")
+    return GooglePlacesAdapter(api_key=api_key)
+
 def get_city_analysis_service(
     repo: FirebaseReviewRepository = Depends(get_review_repositorie),
     apify_adapter: ApifyReviewsAdapter = Depends(get_reviews_adapter),
-    llm_adapter: OpenAIAdapter = Depends(get_open_ai_adapter)
+    llm_adapter: OpenAIAdapter = Depends(get_open_ai_adapter),
+    google_adapter: GooglePlacesAdapter = Depends(get_google_places_adapter),
 ) -> CityDeepAnalysis:
     # Injeta os adapters e o repositório dentro do serviço
-    return CityDeepAnalysis(db_repo=repo, apify_adapter=apify_adapter, llm_adapter=llm_adapter)
+    return CityDeepAnalysis(db_repo=repo, apify_adapter=apify_adapter, google_adapter=google_adapter, llm_adapter=llm_adapter)
 
 # ==========================================
 # SCHEMAS (Modelos de Entrada)

@@ -1,7 +1,7 @@
-from .base import GooglePlaces
+from .base import GooglePlacesProviderAdapter
 import requests
 
-class GooglePlacesAdapter(GooglePlaces):
+class GooglePlacesAdapter(GooglePlacesProviderAdapter):
     def __init__(self, api_key: str):
         self.api_key = api_key
         
