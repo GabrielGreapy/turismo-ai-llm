@@ -6,10 +6,12 @@ class ApifyReviewsAdapter(ReviewProviderAdapter):
 
     def __init__(self, token_apify : str):
         self.client = ApifyClient(token_apify)
-
-    def fetch_reviews(self, place_id : str, limit : int):
+        
+    def fetch_reviews(self, place_id : str | List[str], limit : int):
+        # Aceita um id (tela de detalhes do ponto) ou uma lista de ids (análise profunda da cidade)
+        place_ids = [place_id] if isinstance(place_id, str) else place_id
         run_input = {
-            "placeIds" : [place_id],
+            "placeIds" : place_ids,
             "maxReviews" : limit,
             "language" : "pt-BR",
             "personalData" : False
@@ -68,6 +70,7 @@ class ApifyReviewsAdapter(ReviewProviderAdapter):
             rating = float(item.get("stars", 0)),
             text = text,
             date = item.get("publishedAtDate"),
+            place_id = item.get("placeId"),
         )
 
 
