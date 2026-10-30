@@ -79,6 +79,7 @@ class FirebaseReviewRepository(ReviewRepositorie):
                 review_id = review_data.get("review_id")
                 
                 if not spot_id or not review_id:
+                    print(f"🚨 IGNORADO! Motivo -> spot_id: {spot_id} | review_id: {review_id}")
                     continue
                 spot_ref = self.db.collection(self.deep_analysis_collection).document(city_place_id).collection("spots").document(spot_id)
                 

@@ -35,6 +35,7 @@ class ApifyReviewsAdapter(ReviewProviderAdapter):
                 formattedReviews.append(
                     ReviewSchema(
                         review_id = item.get("reviewId"),
+                        place_id = item.get("placeId"),
                         author = author_label,
                         rating = float(item.get("stars", 0)),
                         text = text,
