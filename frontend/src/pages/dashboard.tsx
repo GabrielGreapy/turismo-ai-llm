@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
    AlertTriangle, MoreVertical, 
   MapPin, Shield, Home, CheckCircle2, Trash2, Clock, 
@@ -8,39 +8,87 @@ import {
 } from 'lucide-react';
 
 import type { Alerta } from '../models/Visual';
-// Importações presumidas baseadas no seu código
 import TotalCommentaries from '../components/totalComentaries';
 import Infractions from '../components/Infractions';
-
 import type { TouristSpot } from '../models/Spot';
 import DashboardSpotsMap from '../components/DashboardMap';
+import CustomAlertsPanel from '../components/CustomAlertsPanel';
+
+// IMPORTAÇÕES DO FIREBASE
+import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore'; 
+import { db } from '../firebaseConfig';
+
 export default function Dashboard() {
   // 1. ESTADOS LOCALIZADOS NO DASHBOARD
   const [searchTerm] = useState('');
-  
   const [periodo, setPeriodo] = useState('Esta Semana');
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
-  const [spots, setSpots] = useState<TouristSpot[]>([])
   
-  const [alertas, setAlertas] = useState<Alerta[]>([
-    { id: 1, localidade: 'Praia do Sol - Norte', problema: 'Acúmulo de resíduos sólidos em área protegida', severidade: 'Alto', horario: 'Há 14 min', tipo: 'map' },
-    { id: 2, localidade: 'Trilha do Mirante', problema: 'Sinalização de segurança vandalizada', severidade: 'Médio', horario: 'Há 45 min', tipo: 'shield' },
-    { id: 3, localidade: 'Museu Histórico', problema: 'Obstrução em rampa de acessibilidade lateral', severidade: 'Baixo', horario: 'Há 1 hora', tipo: 'home' }
-  ]);
+  // Alterado para aceitar string, pois os IDs do Firebase são strings (ex: "8a7b6c5d")
+  const [activeMenuId, setActiveMenuId] = useState<number | string | null>(null);
+  const [spots, setSpots] = useState<TouristSpot[]>([]);
+  
+  // Inicializa a lista vazia. Ela será preenchida pelo Firebase.
+  const [alertas, setAlertas] = useState<Alerta[]>([]);
+
+  // 2. BUSCA EM TEMPO REAL NO FIREBASE
+  useEffect(() => {
+    const alertsCollectionRef = collection(db, 'alerts');
+
+    // onSnapshot cria uma conexão em tempo real com o banco
+    const unsubscribe = onSnapshot(alertsCollectionRef, (snapshot) => {
+      const fetchAlertas = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        
+        // Lógica simples para definir o ícone com base no tipo de perigo retornado pela IA
+        let tipoIcone = 'home'; // Padrão
+        if (data.tipo_perigo === 'Crítico') tipoIcone = 'map';
+        else if (data.tipo_perigo === 'Segurança') tipoIcone = 'shield';
+
+        return {
+          id: docSnap.id, 
+          localidade: data.place_id || 'Local Desconhecido', 
+          problema: data.justificativa || 'Problema não especificado',
+          severidade: data.tipo_perigo || 'Médio',
+          horario: 'Recente', // Como não temos timestamp no backend ainda, deixamos fixo
+          tipo: tipoIcone,
+        } as unknown as Alerta; 
+        // Usamos as unknown as Alerta para evitar erro caso sua interface exija id numérico
+      });
+
+      setAlertas(fetchAlertas as Alerta[]);
+    });
+
+    // Limpa a conexão quando o usuário sai da tela do Dashboard
+    return () => unsubscribe();
+  }, []);
 
   const dadosGrafico = periodo === 'Esta Semana' 
     ? { seguranca: { qtd: 68, p: '47.8%' }, higiene: { qtd: 42, p: '29.5%' }, acesso: { qtd: 32, p: '22.7%' } }
     : { seguranca: { qtd: 245, p: '52.1%' }, higiene: { qtd: 198, p: '31.2%' }, acesso: { qtd: 110, p: '16.7%' } };
 
-  const handleDeletarAlerta = (id: number) => {
-    setAlertas(alertas.filter(alerta => alerta.id !== id));
-    setActiveMenuId(null);
+  // 3. ATUALIZANDO AS AÇÕES PARA DELETAR NO BANCO DE DADOS
+  const handleDeletarAlerta = async (id: number | string) => {
+    try {
+      await deleteDoc(doc(db, 'alerts', String(id)));
+      setActiveMenuId(null);
+      // Não precisamos fazer setAlertas aqui, porque o onSnapshot vai notar a exclusão
+      // e atualizar a tela sozinho!
+    } catch (error) {
+      console.error("Erro ao deletar alerta:", error);
+      alert("Erro ao excluir. Verifique o console.");
+    }
   };
 
-  const handleResolverAlerta = (id: number) => {
-    alert(`Alerta #${id} marcado como resolvido!`);
-    setAlertas(alertas.filter(alerta => alerta.id !== id));
-    setActiveMenuId(null);
+  const handleResolverAlerta = async (id: number | string) => {
+    try {
+      // Aqui o ideal futuramente seria um updateDoc() mudando o status para 'Resolvido'.
+      // Mas para manter o comportamento original (que remove da tela), vamos deletar por enquanto.
+      await deleteDoc(doc(db, 'alerts', String(id)));
+      alert(`Alerta foi marcado como resolvido!`);
+      setActiveMenuId(null);
+    } catch (error) {
+      console.error("Erro ao resolver alerta:", error);
+    }
   };
 
   const alertasFiltrados = alertas.filter(alerta => 
@@ -48,11 +96,8 @@ export default function Dashboard() {
     alerta.problema.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  
-
   return (
     <div className="bg-[#F8FAFC] text-[#1b1c1d] min-h-screen flex flex-col antialiased selection:bg-[#041627] selection:text-white font-sans">
-      {/* Estilos injetados para animações globais (Radar) e Scrollbar */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes pulse-ring {
           0% { transform: scale(0.95); opacity: 0.8; }
@@ -83,7 +128,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-2 self-start md:self-auto">
               <span className="flex items-center text-xs text-[#505f76] bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-lg shadow-sm font-medium">
-                <Clock className="w-3.5 h-3.5 text-slate-400 mr-1.5" /> Última sincronização: <strong className="text-[#041627] ml-1">Hoje, 14:38</strong>
+                <Clock className="w-3.5 h-3.5 text-slate-400 mr-1.5" /> Última sincronização: <strong className="text-[#041627] ml-1">Agora mesmo</strong>
               </span>
               <button className="p-2 bg-white border border-[#E2E8F0] rounded-lg text-slate-600 hover:text-[#041627] hover:bg-slate-50 transition-colors shadow-sm" title="Atualizar dados">
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -108,7 +153,7 @@ export default function Dashboard() {
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-red-50 text-[#ba1a1a]">
                   <Flame className="w-3 h-3" /> Atenção Imediata
                 </span>
-                <span className="text-[#74777d]">3 críticas</span>
+                <span className="text-[#74777d]">{alertas.length} ocorrências</span>
               </div>
             </div>
 
@@ -179,27 +224,16 @@ export default function Dashboard() {
           </div>
 
           <div className="relative w-full h-[500px] sm:h-[560px] rounded-xl overflow-hidden border border-[#CBD5E1] bg-[#F4F6F8] shadow-inner select-none">
-            {/* SVG Base do Mapa */}
             <DashboardSpotsMap
             spots={spots} 
             onSpotClick={() => {}} 
             height='100%'
             setSpots={setSpots}
             />
-
-           
-
-            
-            
-
-           
-
-            {/* Controles do Mapa */}
-            
-
-            
           </div>
         </section>
+
+        <CustomAlertsPanel spots={spots} />
 
         {/* SECTION: ANALYTICS & CRITICAL ZONES */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 scroll-mt-24" id="analitico">
@@ -384,10 +418,10 @@ export default function Dashboard() {
                       <td className="py-4 px-6 text-[#1b1c1d] font-medium">{alerta.problema}</td>
                       <td className="py-4 px-6 text-center">
                         <span className={`px-2.5 py-1 text-[11px] font-extrabold rounded-full uppercase inline-flex items-center gap-1 ${
-                          alerta.severidade === 'Alto' ? 'bg-[#ffdad6] text-[#93000a]' :
-                          alerta.severidade === 'Médio' ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#e0f2fe] text-[#0369a1]'
+                          alerta.severidade === 'Crítico' || alerta.severidade === 'Alto' ? 'bg-[#ffdad6] text-[#93000a]' :
+                          alerta.severidade === 'Segurança' || alerta.severidade === 'Médio' ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#e0f2fe] text-[#0369a1]'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${alerta.severidade === 'Alto' ? 'bg-[#ba1a1a]' : alerta.severidade === 'Médio' ? 'bg-[#d97706]' : 'bg-[#2563eb]'}`}></span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${alerta.severidade === 'Crítico' || alerta.severidade === 'Alto' ? 'bg-[#ba1a1a]' : alerta.severidade === 'Segurança' || alerta.severidade === 'Médio' ? 'bg-[#d97706]' : 'bg-[#2563eb]'}`}></span>
                           {alerta.severidade}
                         </span>
                       </td>
